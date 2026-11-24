@@ -1,5 +1,7 @@
 # Ventana Mágica · Ventana Peque
 
+**Demo en vivo:** https://ventana-magica.onrender.com — entra con `123456` (tablet del niño), `111111` (familia) o `222222` (adulto de confianza). Es una demo con datos ficticios que se borra cada 6 h; en el hospital la app corre en una caja local sin internet.
+
 Web app local para que un niño hospitalizado (6–12 años) siga conectado con su familia y su clase.
 El niño personaliza su ventana con la voz o con texto, y por ella le llegan fotos del día a día que un adulto aprueba antes.
 

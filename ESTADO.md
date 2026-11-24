@@ -3,8 +3,12 @@
 Última actualización: 24 nov 2026 (tarde-noche)
 
 ## Cómo comprobarlo (para OpenBot y el equipo)
-- Pruebas: `timeout 240 npm test` (61 pruebas). Las de `mvp/` son del prototipo antiguo y ya no reflejan la app.
+- Pruebas: `timeout 240 npm test` (64 pruebas). Las de `mvp/` son del prototipo antiguo y ya no reflejan la app.
 - Arrancar: `npm start` → `http://localhost:8080`. Panel: `/panel` con la clave de `datos/ACCESOS-DEMO.md` (no va a git).
+
+## Demo en vivo
+- https://ventana-magica.onrender.com · códigos 123456 (tablet), 111111 (familia), 222222 (adulto). Plan gratuito: la primera visita tras 15 min sin uso tarda ~1 min en despertar. Se borra sola cada 6 h. Sin voz (en la nube solo texto y lugares). Clave del panel: en `datos/ACCESOS-DEMO.md`.
+- Código: https://github.com/JL-UNIP-LDA/ventana-magica
 
 ## Documentos
 - Presentación profesional (12 diapositivas, con notas del orador): https://claude.ai/artifact/7wZSB4TxUtFVAeTJRsyiRj
@@ -19,7 +23,7 @@
 - **Todo pasa por el adulto de confianza**, en los dos sentidos.
 - **Cuatro reglas del hospital:** sin internet (caja con wifi propia, cartas programadas, la app abre sin conexión), desinfectable (botón de limpieza), sesiones cortas, sin datos reales.
 - **Ligera:** la web se sirve comprimida (≈48 KB en total) con caché y ETag; la voz es un solo ejecutable de 7,5 MB (antes 146 MB de código fuente); `npm run paquete` crea el paquete mínimo para la caja.
-- Pruebas: 63 de 63 en verde.
+- Pruebas: 64 de 64 en verde.
 
 ## Ciclo automático (hasta el 26 nov, 09:30)
 - Backlog en `BACKLOG.md`; una mejora por vuelta, solo se sube con las pruebas en verde.
