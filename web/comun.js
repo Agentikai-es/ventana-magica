@@ -12,7 +12,9 @@ export const MENSAJES = {
   demasiados_intentos: 'Demasiados intentos. Espera un minuto.',
   formato: 'Ese archivo no es una foto válida.',
   demasiado_grande: 'La foto es demasiado grande.',
-  voz_no_disponible: 'La voz no está disponible ahora. Escribe o usa los botones.',
+  voz_no_disponible: 'La voz no está disponible ahora. Escribe o toca un lugar.',
+  voz_lenta: 'La voz está tardando demasiado. Escribe o toca un lugar.',
+  sin_ffmpeg: 'La caja no puede procesar fotos, audios ni vídeos ahora mismo. Avisa a quien la lleva.',
   voz_fallo: 'No te he entendido bien. ¿Lo repites o lo escribes?',
   consentimiento: 'Falta la referencia del consentimiento firmado.',
   clave: 'Clave incorrecta.',
@@ -23,7 +25,7 @@ export const MENSAJES = {
 export class ErrorApi extends Error {}
 
 // Petición a la API. Añade la cabecera anti-CSRF y convierte errores en mensajes claros.
-export async function api(ruta, { metodo = 'GET', cuerpo, tipo, cabeceras = {}, redirigir = !ruta.startsWith('/api/panel') } = {}) {
+export async function api(ruta, { metodo = 'GET', cuerpo, tipo, cabeceras = {}, redirigir = !ruta.startsWith('/api/panel'), espera } = {}) {
   const h = { ...cabeceras };
   let body = cuerpo;
   if (metodo !== 'GET') h['x-vp'] = '1';
@@ -31,9 +33,9 @@ export async function api(ruta, { metodo = 'GET', cuerpo, tipo, cabeceras = {}, 
   if (tipo) h['content-type'] = tipo;
   let r;
   try {
-    r = await fetch(ruta, { method: metodo, headers: h, body, credentials: 'same-origin' });
-  } catch {
-    throw new ErrorApi(MENSAJES.sin_conexion);
+    r = await fetch(ruta, { method: metodo, headers: h, body, credentials: 'same-origin', signal: espera ? AbortSignal.timeout(espera) : undefined });
+  } catch (e) {
+    throw new ErrorApi(e?.name === 'TimeoutError' ? MENSAJES.voz_lenta : MENSAJES.sin_conexion);
   }
   const datos = await r.json().catch(() => ({}));
   if (r.status === 401 && redirigir) { location.href = '/?sin=acceso'; throw new ErrorApi(MENSAJES.sin_acceso); }

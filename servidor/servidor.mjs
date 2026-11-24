@@ -14,7 +14,7 @@ import { createHash } from 'node:crypto';
 
 import { abrirDB, hash, ROLES, EMOJIS_REACCION, PIEZAS_PUZLE } from './db.mjs';
 import { crearJuego } from './juego.mjs';
-import { transcribir, vozDisponible, calentar, ejecutar, FFMPEG } from './voz.mjs';
+import { transcribir, vozDisponible, calentar, ejecutar, FFMPEG, ffmpegDisponible } from './voz.mjs';
 import { construirEscenario } from '../web/lib/escenario.js';
 import { AVATARES } from '../web/lib/catalogo.js';
 
@@ -186,6 +186,7 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
   // Fotos y audios: el original vive en una carpeta temporal aparte y se borra siempre.
   // ffmpeg re-codifica: sin metadatos (GPS, cámara, fecha), tamaño acotado, formato que abre cualquier tablet.
   async function guardarMedio(datos, tipo) {
+    if (!ffmpegDisponible()) throw new ErrorHttp(503, 'sin_ffmpeg');
     const tmp = await mkdtemp(join(tmpdir(), 'vp-medio-'));
     const nombre = `${randomUUID()}.${tipo === 'audio' ? 'm4a' : 'jpg'}`;
     const args = tipo === 'audio'
@@ -207,6 +208,7 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
   // Si el formato no cabe en MP4, se recodifica a 480p. El fotograma sirve de puzle.
   async function leerVideo(req) {
     if (!/^video\//.test(req.headers['content-type'] || '')) throw new ErrorHttp(415, 'formato');
+    if (!ffmpegDisponible()) throw new ErrorHttp(503, 'sin_ffmpeg');
     const datosVideo = await leerCuerpo(req, 40 * 1024 * 1024);
     const tmp = await mkdtemp(join(tmpdir(), 'vp-video-'));
     const base = randomUUID();
@@ -715,6 +717,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === normalize(process.argv
   if (https) for (const ip of ipsLocales()) console.log(`  En la wifi: https://${ip}:${PUERTO}`);
   else console.log('  Sin HTTPS: la wifi está cerrada. Ejecuta «npm run certificados» para abrirla a tablets y móviles.');
   console.log(`  Voz local: ${vozDisponible() ? 'activa (whisper.cpp)' : 'NO disponible (ejecuta «npm run voz»)'}`);
+  if (!ffmpegDisponible()) console.log('  ⚠ Falta ffmpeg: no se podrán recibir fotos, audios ni vídeos. Instálalo (apt install ffmpeg / brew install ffmpeg).');
   if (app.infoDemo) {
     console.log('\n  ⚠ MODO DEMO (datos ficticios; nunca con niños reales). Panel: clave 123456');
     for (const c of app.infoDemo.codigos) console.log(`    ${c.codigo}  ${c.etiqueta}`);

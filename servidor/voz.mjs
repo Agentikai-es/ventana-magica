@@ -1,7 +1,7 @@
 // Voz local: ffmpeg convierte el audio y whisper.cpp lo transcribe en este mismo servidor.
 // El audio nunca sale de la máquina y se borra nada más transcribirlo.
 
-import { execFile } from 'node:child_process';
+import { execFile, spawnSync } from 'node:child_process';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -43,7 +43,15 @@ export function limpiarTranscripcion(texto) {
   return t.slice(0, 200);
 }
 
+// ¿Hay ffmpeg? Hace falta para la voz, las fotos, los audios y los vídeos. Se mira una vez.
+let hayFfmpeg = null;
+export function ffmpegDisponible() {
+  if (hayFfmpeg === null) hayFfmpeg = spawnSync(FFMPEG, ['-version'], { timeout: 5000 }).status === 0;
+  return hayFfmpeg;
+}
+
 export function vozDisponible() {
+  if (!ffmpegDisponible()) return false;
   return existsSync(MODELO) && (WHISPER !== 'whisper-cli' || !!process.env.VP_WHISPER_BIN || existsSync('/opt/homebrew/bin/whisper-cli'));
 }
 

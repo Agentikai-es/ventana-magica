@@ -130,9 +130,9 @@ $('mic').onclick = async () => {
   $('micTexto').textContent = 'Hablar';
   $('estado').textContent = 'Pensando…';
   try {
-    const { texto } = await api('/api/voz', { metodo: 'POST', cuerpo: audio, tipo: audio.type || 'audio/webm' });
+    const { texto } = await api('/api/voz', { metodo: 'POST', cuerpo: audio, tipo: audio.type || 'audio/webm', espera: 25000 });
     $('estado').textContent = texto ? `He oído «${texto}». ${pedir(texto)}` : 'No te he oído bien. ¿Lo repites?';
-  } catch (e) { $('estado').textContent = e.message; }
+  } catch (e) { $('estado').textContent = e.message; elegirPestana('Lugares'); }
 };
 
 // Lectura en voz alta: solo voces del propio dispositivo.
@@ -533,7 +533,12 @@ async function iniciar() {
     await aplicar(construirEscenario('playa', { avatar }), { guardar: false });
     $('narracion').textContent = 'Pídele a la ventana adónde quieres ir. Por ejemplo: «llévame a la Torre Eiffel de noche».';
   }
-  if (!estado.voz || !grabadoraDisponible()) { $('mic').disabled = true; $('mic').title = 'La voz no está disponible'; }
+  if (!estado.voz || !grabadoraDisponible()) {
+    $('mic').disabled = true;
+    $('micTexto').textContent = 'Sin voz';
+    $('mic').title = 'La voz no está disponible: escribe o toca un lugar';
+    $('estado').textContent = 'Hoy la voz descansa: escribe adónde quieres ir o toca un lugar en «Lugares».';
+  }
   pintarBuzon();
   pintarPersonas();
 

@@ -13,7 +13,8 @@ Reglas del ciclo automático:
   Hecho 24 nov: 123456/111111/222222 entran en su pantalla; foto con pistas → aprobación → carta en la ventana; tablet, aprobar y enviar se ven bien y sin errores de consola. Nada roto.
 - [x] Que la caché del service worker cambie de versión sola cuando cambian los archivos (que nadie vea una versión vieja el día de la demo).
   Hecho 24 nov: el servidor calcula una huella de todos los archivos de `web/` al arrancar y la pone como versión de `sw.js`; con cualquier cambio, la tablet descarta la caché vieja. Con prueba.
-- [ ] Mensajes de error claros si el servidor no tiene voz (falta el modelo) o ffmpeg; que la tablet ofrezca texto y lugares sin quedarse esperando.
+- [x] Mensajes de error claros si el servidor no tiene voz (falta el modelo) o ffmpeg; que la tablet ofrezca texto y lugares sin quedarse esperando.
+  Hecho 24 nov: el servidor detecta si falta ffmpeg (aviso al arrancar y error claro «sin_ffmpeg» al subir); sin voz, la tablet muestra «Sin voz» y propone escribir o tocar un lugar; la petición de voz corta a los 25 s y abre «Lugares».
 - [ ] `scripts/comprobar.sh`: chequeo rápido antes de la demo (servidor responde, voz lista, certificado vale para la IP actual, códigos demo activos).
 
 ## Prioridad 2 · calidad que se nota

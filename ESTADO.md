@@ -25,6 +25,7 @@
 - Backlog en `BACKLOG.md`; una mejora por vuelta, solo se sube con las pruebas en verde.
 - 24 nov: recorrido de la demo con códigos fijos comprobado en tablet y móvil, sin fallos.
 - 24 nov: la caché de la tablet cambia de versión sola con cada cambio de la web.
+- 24 nov: avisos claros si falta la voz o ffmpeg; la voz nunca deja a la tablet esperando más de 25 s.
 
 ## Falta
 - Instalar en una Raspberry Pi real (`bash scripts/instalar-raspberry.sh`) y probar su wifi propia.
