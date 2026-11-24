@@ -8,7 +8,7 @@
 
 ## Demo en vivo
 - https://ventana-magica.onrender.com · códigos 123456 (tablet), 111111 (familia), 222222 (adulto). Plan gratuito: la primera visita tras 15 min sin uso tarda ~1 min en despertar. Se borra sola cada 6 h. Sin voz (en la nube solo texto y lugares). Clave del panel: en `datos/ACCESOS-DEMO.md`.
-- Código: https://github.com/JL-UNIP-LDA/ventana-magica
+- Código: https://github.com/Agentikai-es/ventana-magica
 
 ## Documentos
 - Presentación profesional (12 diapositivas, con notas del orador): https://claude.ai/artifact/7wZSB4TxUtFVAeTJRsyiRj
