@@ -4,6 +4,8 @@
 
 import { DatabaseSync } from 'node:sqlite';
 import { createHash, randomBytes, randomInt, randomUUID } from 'node:crypto';
+import { prepararTablaPlanta } from './planta.mjs';
+import { construirEscenario } from '../web/lib/escenario.js';
 
 const DIA = 24 * 60 * 60 * 1000;
 const MIN30 = 30 * 60 * 1000;
@@ -113,6 +115,8 @@ export function abrirDB(ruta = ':memory:') {
   `);
   // Postal-acertijo del niño: escenario elegido + «¿dónde está hoy?».
   anadir('mensajes', [['escena', 'TEXT'], ['intentos', 'INTEGER NOT NULL DEFAULT 0']]);
+  // Comunidad de la planta: mensajes entre niños de la misma caja (servidor/planta.mjs).
+  prepararTablaPlanta(db);
   return crearRepositorio(db);
 }
 
@@ -201,26 +205,42 @@ function crearRepositorio(db) {
     return { token, rol: a.rol, accesoId: a.id };
   }
 
-  // Espacio de demostración con códigos fijos y fáciles. SOLO para el Demo Day: nunca con niños reales.
+  // Espacios de demostración con códigos fijos y fáciles. SOLO para el Demo Day: nunca con niños reales.
+  // Leo es el protagonista; Sara y Nico son otros niños ficticios de la planta para enseñar la comunidad.
   const CODIGOS_DEMO = [['ventana', 'Tablet de Leo', '123456'], ['aportador', 'Abuela', '111111'], ['tutor', 'Mamá', '222222'], ['aportador', 'Clase de 3.º B', '333333']];
+  const NINOS_DEMO = [
+    { ref: 'DEMO ficticia (códigos fijos)', alias: 'Leo', avatar: 'zorrito', mensaje: '¡Te esperamos en clase! Tu sitio sigue aquí.', escena: null, codigos: CODIGOS_DEMO },
+    { ref: 'DEMO ficticia (Sara)', alias: 'Sara', avatar: 'astronauta', mensaje: '¡Tu equipo de baloncesto te espera!', escena: ['paris', 'atardecer'],
+      codigos: [['ventana', 'Tablet de Sara', '444444'], ['tutor', 'Papá de Sara', '555555']] },
+    { ref: 'DEMO ficticia (Nico)', alias: 'Nico', avatar: 'superheroe', mensaje: '¡La clase te ha guardado el mejor sitio!', escena: ['egipto', 'dia'], codigos: [] },
+  ];
   function asegurarDemo() {
     const LEJOS = ahora() + 365 * DIA;
-    let e = db.prepare("SELECT id FROM espacios WHERE consentimiento_ref = 'DEMO ficticia (códigos fijos)'").get();
-    if (!e) {
-      const id = randomUUID();
-      db.prepare(`INSERT INTO espacios (id, alias, avatar, escena, mensaje_puzle, dias_fotos, creado, borrar_en, consentimiento_ref, consentimiento_version, consentimiento_fecha)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(id, 'Leo', 'zorrito', null, '¡Te esperamos en clase! Tu sitio sigue aquí.', 30, ahora(), LEJOS, 'DEMO ficticia (códigos fijos)', VERSION_CONSENTIMIENTO, ahora());
-      e = { id };
+    const espacios = [];
+    for (const n of NINOS_DEMO) {
+      let e = db.prepare('SELECT id, escena FROM espacios WHERE consentimiento_ref = ?').get(n.ref);
+      if (!e) {
+        const id = randomUUID();
+        db.prepare(`INSERT INTO espacios (id, alias, avatar, escena, mensaje_puzle, dias_fotos, creado, borrar_en, consentimiento_ref, consentimiento_version, consentimiento_fecha)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(id, n.alias, n.avatar, null, n.mensaje, 30, ahora(), LEJOS, n.ref, VERSION_CONSENTIMIENTO, ahora());
+        e = { id, escena: null };
+      }
+      db.prepare('UPDATE espacios SET comunidad = 1, borrar_en = ? WHERE id = ?').run(LEJOS, e.id);
+      if (n.escena && !e.escena) guardarEscena(e.id, construirEscenario(n.escena[0], { avatar: n.avatar, momento: n.escena[1] }));
+      for (const [rol, etiqueta, codigo] of n.codigos) {
+        // El código vuelve a apuntar a este acceso aunque otro lo hubiera tomado.
+        db.prepare('UPDATE accesos SET codigo_hash = NULL WHERE codigo_hash = ? AND fijo = 0').run(hash(codigo));
+        const a = db.prepare('SELECT id FROM accesos WHERE espacio_id = ? AND etiqueta = ? AND fijo = 1').get(e.id, etiqueta);
+        if (a) db.prepare('UPDATE accesos SET codigo_hash = ?, codigo_caduca = ?, caduca = ?, revocado = 0 WHERE id = ?').run(hash(codigo), LEJOS, LEJOS, a.id);
+        else db.prepare(`INSERT INTO accesos (id, espacio_id, rol, etiqueta, token_hash, codigo_hash, codigo_caduca, creado, caduca, fijo)
+          VALUES (?,?,?,?,?,?,?,?,?,1)`).run(randomUUID(), e.id, rol, etiqueta, hash(randomBytes(24).toString('base64url')), hash(codigo), LEJOS, ahora(), LEJOS);
+      }
+      espacios.push(e.id);
     }
-    for (const [rol, etiqueta, codigo] of CODIGOS_DEMO) {
-      // El código vuelve a apuntar a este acceso aunque otro lo hubiera tomado.
-      db.prepare('UPDATE accesos SET codigo_hash = NULL WHERE codigo_hash = ? AND fijo = 0').run(hash(codigo));
-      const a = db.prepare('SELECT id FROM accesos WHERE espacio_id = ? AND etiqueta = ? AND fijo = 1').get(e.id, etiqueta);
-      if (a) db.prepare('UPDATE accesos SET codigo_hash = ?, codigo_caduca = ?, caduca = ?, revocado = 0 WHERE id = ?').run(hash(codigo), LEJOS, LEJOS, a.id);
-      else db.prepare(`INSERT INTO accesos (id, espacio_id, rol, etiqueta, token_hash, codigo_hash, codigo_caduca, creado, caduca, fijo)
-        VALUES (?,?,?,?,?,?,?,?,?,1)`).run(randomUUID(), e.id, rol, etiqueta, hash(randomBytes(24).toString('base64url')), hash(codigo), LEJOS, ahora(), LEJOS);
-    }
-    return { espacioId: e.id, codigos: CODIGOS_DEMO.map(([rol, etiqueta, codigo]) => ({ rol, etiqueta, codigo })) };
+    return {
+      espacioId: espacios[0], espacios,
+      codigos: NINOS_DEMO.flatMap((n) => n.codigos.map(([rol, etiqueta, codigo]) => ({ rol, etiqueta, codigo }))),
+    };
   }
 
   function revocarAcceso(accesoId) {
@@ -236,7 +256,7 @@ function crearRepositorio(db) {
   }
 
   function listarEspacios() {
-    const espacios = db.prepare('SELECT id, alias, avatar, creado, borrar_en, consentimiento_ref, lado FROM espacios ORDER BY creado DESC').all();
+    const espacios = db.prepare('SELECT id, alias, avatar, creado, borrar_en, consentimiento_ref, lado, comunidad FROM espacios ORDER BY creado DESC').all();
     const acc = db.prepare('SELECT id, rol, etiqueta, caduca, revocado FROM accesos WHERE espacio_id = ? ORDER BY creado');
     return espacios.map((e) => ({ ...e, accesos: acc.all(e.id) }));
   }
@@ -295,6 +315,7 @@ function crearRepositorio(db) {
       ...db.prepare('SELECT archivo FROM aportes WHERE espacio_id = ? AND archivo IS NOT NULL').all(espacioId),
       ...db.prepare('SELECT video AS archivo FROM aportes WHERE espacio_id = ? AND video IS NOT NULL').all(espacioId),
       ...db.prepare('SELECT archivo FROM mensajes WHERE espacio_id = ? AND archivo IS NOT NULL').all(espacioId),
+      ...db.prepare('SELECT archivo FROM planta WHERE (de_espacio = ? OR a_espacio = ?) AND archivo IS NOT NULL').all(espacioId, espacioId),
     ].map((r) => r.archivo);
   }
 
@@ -322,6 +343,7 @@ function crearRepositorio(db) {
     const archivos = archivosDe(espacioId);
     db.prepare('DELETE FROM aportes WHERE espacio_id = ?').run(espacioId);
     db.prepare('DELETE FROM mensajes WHERE espacio_id = ?').run(espacioId);
+    db.prepare('DELETE FROM planta WHERE de_espacio = ? OR a_espacio = ?').run(espacioId, espacioId);
     auditar(espacioId, quien, 'borrar_aportes', `${archivos.length} fotos`);
     compactar();
     return archivos;
@@ -339,6 +361,9 @@ function crearRepositorio(db) {
       aportes: aportes(espacioId).map(({ id, autor, tipo, texto, estado, reaccion, creado, decidido, borrar_en, escena, pistas, lugar }) =>
         ({ id, autor, tipo, texto, estado, reaccion, creado, decidido, borrar_en, escena, pistas, lugar })),
       mensajes: db.prepare('SELECT id, acceso_id, de, tipo, texto, secreto, estado, juego, creado, decidido, borrar_en FROM mensajes WHERE espacio_id = ? ORDER BY creado').all(espacioId),
+      planta: db.prepare(`SELECT p.tipo, p.texto, p.estado, p.creado, p.de_espacio = ? AS enviado, e.alias AS con
+        FROM planta p JOIN espacios e ON e.id = CASE WHEN p.de_espacio = ? THEN p.a_espacio ELSE p.de_espacio END
+        WHERE p.de_espacio = ? OR p.a_espacio = ? ORDER BY p.creado`).all(espacioId, espacioId, espacioId, espacioId).map((x) => ({ ...x, enviado: !!x.enviado })),
       auditoria: auditoria(espacioId),
     };
   }
@@ -357,6 +382,11 @@ function crearRepositorio(db) {
     for (const m of viejos) {
       if (m.archivo) archivos.push(m.archivo);
       db.prepare('DELETE FROM mensajes WHERE id = ?').run(m.id);
+    }
+    const viejosPlanta = db.prepare(`SELECT id, archivo FROM planta WHERE borrar_en < ? OR (estado = 'rechazado' AND decidido < ?)`).all(momento, momento - DIA);
+    for (const m of viejosPlanta) {
+      if (m.archivo) archivos.push(m.archivo);
+      db.prepare('DELETE FROM planta WHERE id = ?').run(m.id);
     }
     for (const e of db.prepare('SELECT id FROM espacios WHERE borrar_en < ?').all(momento)) {
       archivos.push(...borrarEspacio(e.id, 'limpieza'));

@@ -27,13 +27,25 @@ Un espacio en la tablet que el niño personaliza con su voz o con texto, y por e
 
 **P3 · Ida y vuelta.** El niño reacciona a las postales (❤️ 😂 👏) y envía su escenario de vuelta como postal. Participa, no solo mira.
 
+**P4 · Amigos de la planta (comunidad interna, 24 nov).** Los niños ingresados que usan la misma caja se conocen y se animan entre ellos, sin internet.
+- Cada niño ve a los demás solo por alias, avatar y dónde está hoy su ventana («Sara está en París»). Nunca nombres, habitaciones ni nada clínico.
+- Pueden mandarse: ánimos de una lista fija (llegan al momento), invitación «¡Ven a visitarme!» (llega al momento), texto, postal-acertijo («¿Dónde está Leo hoy?») y foto-puzle con mensaje secreto.
+- Texto, postal y foto-puzle los aprueba antes el adulto de confianza de quien lo envía. Sin audio entre niños.
+- «Ir de visita»: tu ventana se pone igual que la del amigo, con tu avatar. Así dos niños «están» juntos en el mismo sitio.
+- Solo entra quien tiene la comunidad activada en el panel del hospital, con el consentimiento de los tutores. Se borra con el resto de datos.
+
+**P5 · Mundo sin límites (24 nov).** El niño no elige entre dos o tres fondos: la ventana compone miles de escenarios (lugares del mundo × hora × clima × personajes × avatar), con sonido sintetizado.
+- Si no sabe qué pedir, la ventana le sugiere lugares (y dónde están hoy sus amigos de la planta).
+- IA local: voz con whisper.cpp; un modelo de texto pequeño dentro de la caja entiende frases libres y propone escenarios. Si no está, funcionan las reglas del catálogo.
+- Imágenes y vídeo generados por IA en directo: no en una Raspberry Pi sin internet (tardaría minutos por imagen). La escena se compone con capas propias (SVG, emojis, animación).
+
 **Ideas para después de la demo:** reto del día compartido con la clase, «Hoy en mi clase» del profesor, cuenta atrás de visitas y cumpleaños, postales con audio corto del familiar.
 
 ## Qué NO hace
 - Cuentos ni radio (quitados el 24 nov).
 - Cuentas complejas, pagos, app nativa, integración con el hospital, historia clínica.
 - Datos reales en la demo: todo ficticio.
-- IA generativa en directo con datos del niño.
+- IA generativa en la nube o con datos del niño: la IA corre dentro de la caja y no guarda nada.
 - Publicar, enviar o contactar a nadie sin OK de Jamin.
 
 ## Arquitectura local (coste de software: 0 €)

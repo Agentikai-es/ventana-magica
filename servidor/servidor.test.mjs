@@ -478,7 +478,7 @@ test('modo demo: códigos fijos que no caducan, sirven en varios dispositivos y 
   demo.repo.limpiar(Date.now() + 60 * 24 * 3600 * 1000); // pasan dos meses
   assert.equal((await canjear('123456')).status, 200, 'no caduca');
   const otra = await crearApp({ datos: d2, demo: true, registrar: () => {} }); // reiniciar no duplica nada
-  assert.equal(otra.repo.listarEspacios().length, 1);
+  assert.equal(otra.repo.listarEspacios().length, 3, 'Leo, Sara y Nico, sin duplicar');
   otra.cerrar(); srv.close(); demo.cerrar();
   await rm(d2, { recursive: true, force: true });
 });

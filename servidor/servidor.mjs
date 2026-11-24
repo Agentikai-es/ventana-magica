@@ -13,6 +13,7 @@ import { gzipSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
 
 import { abrirDB, hash, ROLES, EMOJIS_REACCION, PIEZAS_PUZLE } from './db.mjs';
+import { crearPlanta, ANIMOS } from './planta.mjs';
 import { crearJuego } from './juego.mjs';
 import { transcribir, vozDisponible, calentar, ejecutar, FFMPEG, ffmpegDisponible } from './voz.mjs';
 import { construirEscenario } from '../web/lib/escenario.js';
@@ -99,6 +100,7 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
   await mkdir(FOTOS, { recursive: true, mode: 0o700 });
   const repo = abrirDB(join(datos, 'ventana.db'));
   const juego = crearJuego(repo);
+  const planta = crearPlanta(repo);
 
   // Clave del panel del hospital: se genera la primera vez y solo se guarda su hash.
   const rutaAdmin = join(datos, 'admin.json');
@@ -168,7 +170,7 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
   let reinicio = null;
   if (demo && reinicioHoras > 0) {
     reinicio = setInterval(async () => {
-      await borrarArchivos(repo.borrarAportes(infoDemo.espacioId, 'reinicio-demo'));
+      for (const id of infoDemo.espacios) await borrarArchivos(repo.borrarAportes(id, 'reinicio-demo'));
       repo.asegurarDemo();
     }, reinicioHoras * HORA);
     reinicio.unref();
@@ -275,6 +277,7 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
       alias: e.alias, avatar: e.avatar, escena: e.escena ? JSON.parse(e.escena) : null, fotos, lado: e.lado || 3,
       puzle: { total: PIEZAS_PUZLE, hechas, mensaje: hechas >= PIEZAS_PUZLE ? e.mensaje_puzle : null },
       voz: vozDisponible(), emojis: EMOJIS_REACCION, chats: juego.chatsNino(espacioId),
+      comunidad: !!e.comunidad, planta: planta.conversaciones(espacioId), animos: ANIMOS,
     };
   }
 
@@ -324,6 +327,51 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
         const esc = construirEscenario(String(ambiente), { avatar: String(avatar ?? ''), personajes: Array.isArray(personajes) ? personajes.map(String) : [], sustituido: !!sustituido, momento: String(momento ?? 'dia'), clima: String(clima ?? 'despejado') });
         if (!esc) throw new ErrorHttp(400, 'ambiente');
         repo.guardarEscena(a.espacio_id, esc);
+        return json(res, 200, esc);
+      }
+      // ----- Comunidad de la planta: mensajes entre niños de la misma caja -----
+      if (ruta === '/api/ventana/planta' && m === 'POST') {
+        limitar(`planta:${a.id}`, 40, HORA);
+        let para, tipo, texto = '', secreto = '', archivo = null;
+        if ((req.headers['content-type'] || '').startsWith('application/json')) {
+          const c = await leerJSON(req);
+          para = String(c.para ?? ''); tipo = String(c.tipo ?? ''); texto = limpiarTexto(c.texto, 200);
+          if (tipo === 'puzle') throw new ErrorHttp(400, 'tipo');
+        } else {
+          para = cabecera(req, 'x-para', 64); tipo = 'puzle';
+          texto = cabecera(req, 'x-texto', 200); secreto = cabecera(req, 'x-secreto', 200);
+          if (!secreto) throw new ErrorHttp(400, 'secreto');
+          if (!planta.esVecino(a.espacio_id, para)) throw new ErrorHttp(400, 'para');
+          archivo = await leerFoto(req);
+        }
+        const r = planta.enviar(a.espacio_id, para, { tipo, texto, secreto, archivo });
+        if (!r.ok) {
+          if (archivo) await borrarArchivos([archivo]);
+          throw new ErrorHttp(400, r.error);
+        }
+        if (r.mensaje.estado === 'aprobado') avisar(para, 'ventana', 'planta', { de: repo.espacio(a.espacio_id).alias });
+        else avisar(a.espacio_id, 'tutor', 'pendiente');
+        return json(res, 200, { ok: true, estado: r.mensaje.estado });
+      }
+      const mPl = ruta.match(/^\/api\/ventana\/planta\/([\w-]+)\/(postal|puzle)$/);
+      if (mPl && m === 'POST') {
+        const r = mPl[2] === 'postal'
+          ? planta.adivinarPostal(a.espacio_id, mPl[1], String((await leerJSON(req)).donde ?? ''))
+          : planta.puzleResuelto(a.espacio_id, mPl[1]);
+        if (!r) throw new ErrorHttp(404, 'no_existe');
+        if (r.mensaje.juego === 'resuelto') avisar(r.de, 'ventana', 'planta', { de: repo.espacio(a.espacio_id).alias, resuelto: mPl[2] });
+        return json(res, 200, { acierto: r.acierto, mensaje: r.mensaje });
+      }
+      // Ir de visita al mundo de otro niño: tu ventana se pone igual que la suya, con tu avatar.
+      const mVis = ruta.match(/^\/api\/ventana\/visitar\/([\w-]+)$/);
+      if (mVis && m === 'POST') {
+        if (!planta.esVecino(a.espacio_id, mVis[1])) throw new ErrorHttp(404, 'no_existe');
+        const suya = repo.espacio(mVis[1]).escena;
+        if (!suya) throw new ErrorHttp(400, 'sin_escena');
+        const s2 = JSON.parse(suya);
+        const esc = construirEscenario(s2.ambiente, { avatar: repo.espacio(a.espacio_id).avatar, personajes: s2.personajes, momento: s2.momento, clima: s2.clima });
+        repo.guardarEscena(a.espacio_id, esc);
+        avisar(mVis[1], 'ventana', 'planta', { de: repo.espacio(a.espacio_id).alias, visita: true });
         return json(res, 200, esc);
       }
       if (ruta === '/api/ventana/reaccion' && m === 'POST') {
@@ -483,7 +531,16 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
           recientes: repo.aportes(a.espacio_id, { tipo: 'foto' }).filter((x) => x.estado !== 'pendiente').slice(0, 20).map(fotoPublica),
           diasFotos: e.dias_fotos,
           mensajes: juego.pendientes(a.espacio_id),
+          planta: planta.pendientes(a.espacio_id),
         });
+      }
+      if (ruta === '/api/aprobar/planta' && m === 'POST') {
+        const { id, decision } = await leerJSON(req);
+        const r = planta.decidir(a.espacio_id, String(id), { aprobar: 'aprobado', rechazar: 'rechazado' }[decision] || '', a.id);
+        if (!r.ok) throw new ErrorHttp(400, r.error);
+        if (r.mensaje.estado === 'aprobado') avisar(r.mensaje.a_espacio, 'ventana', 'planta', { de: e.alias });
+        avisar(a.espacio_id, 'ventana', 'actualizar');
+        return json(res, 200, { ok: true });
       }
       if (ruta === '/api/aprobar/mensaje' && m === 'POST') {
         const { id, decision } = await leerJSON(req);
@@ -571,6 +628,13 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
         if (!ROLES.includes(rol)) throw new ErrorHttp(400, 'rol');
         return json(res, 200, enlace(repo.crearAcceso(String(espacioId), rol, limpiarTexto(etiqueta, 30) || 'Invitación')));
       }
+      const mCom = ruta.match(/^\/api\/panel\/espacios\/([\w-]+)\/comunidad$/);
+      if (mCom && m === 'POST') {
+        if (!repo.espacio(mCom[1])) throw new ErrorHttp(404, 'no_existe');
+        planta.activar(mCom[1], !!(await leerJSON(req)).activa);
+        avisar(mCom[1], 'ventana', 'actualizar');
+        return json(res, 200, { ok: true });
+      }
       const mLado = ruta.match(/^\/api\/panel\/espacios\/([\w-]+)\/lado$/);
       if (mLado && m === 'POST') {
         if (!repo.espacio(mLado[1])) throw new ErrorHttp(404, 'no_existe');
@@ -624,6 +688,18 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
   }
 
   // Archivos del chat: cada uno solo a quien le corresponde.
+  // Foto-puzle entre niños: la ven quien la envía, su adulto de confianza (para aprobarla) y quien la recibe ya aprobada.
+  async function mediosPlanta(req, res, id) {
+    const galleta = cookies(req);
+    const nino = repo.accesoPorToken(galleta.vp_ventana);
+    const tutor = repo.accesoPorToken(galleta.vp_tutor);
+    let msg = nino ? planta.archivoVisible(nino.espacio_id, id) : null;
+    if (!msg && tutor) { const x = planta.mensaje(id); if (x?.archivo && x.de_espacio === tutor.espacio_id) msg = x; }
+    if (!msg) throw new ErrorHttp(404, 'no_existe');
+    res.writeHead(200, { 'Content-Type': 'image/jpeg' });
+    res.end(await readFile(join(FOTOS, msg.archivo)));
+  }
+
   async function medios(req, res, id) {
     const msg = juego.mensaje(id);
     if (!msg || !msg.archivo) throw new ErrorHttp(404, 'no_existe');
@@ -692,6 +768,7 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
       }
       if (ruta.startsWith('/fotos/')) return await fotos(req, res, ruta.slice(7));
       if (ruta.startsWith('/medios/')) return await medios(req, res, ruta.slice(8));
+      if (ruta.startsWith('/planta/')) return await mediosPlanta(req, res, ruta.slice(8));
       if (ruta.startsWith('/video/')) return await videoAporte(req, res, ruta.slice(7));
       // Enlace de invitación: /t/<token> → cookie del rol → su pantalla.
       if (ruta.startsWith('/t/')) {
