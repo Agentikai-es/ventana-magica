@@ -14,6 +14,7 @@
     "voz": "bash scripts/instalar-voz.sh",
     "paquete": "bash scripts/paquete.sh",
     "demo": "VP_DEMO=1 node servidor/servidor.mjs",
-    "comprobar": "bash scripts/comprobar.sh"
+    "comprobar": "bash scripts/comprobar.sh",
+    "ia": "bash scripts/instalar-ia.sh"
   }
 }

@@ -78,8 +78,27 @@ function pedir(frase) {
   if (r.tipo === 'alternativas' && r.motivo === 'no_se') return mostrarIdeas();
   if (r.tipo === 'escenario') { efecto('magia'); aplicar(r); return '¡Listo! Mira tu ventana.'; }
   if (r.tipo === 'ajuste' && actual) { efecto('magia'); aplicar(ajustar(actual, r)); return '¡Hecho! Mira el cielo.'; }
+  // Lo que las reglas no entienden lo intenta la IA local de la caja (solo elige del catálogo); si no, alternativas.
+  if (r.tipo === 'alternativas' && r.motivo === 'fuera_catalogo' && estado?.ia) {
+    preguntarIA(frase, r);
+    return 'Déjame pensar…';
+  }
   mostrarAlternativas(r);
   return 'Elige una de estas aventuras.';
+}
+
+async function preguntarIA(frase, alternativas) {
+  try {
+    const { escenario } = await api('/api/ia', { metodo: 'POST', cuerpo: { frase }, espera: 15000 });
+    if (escenario) {
+      efecto('magia');
+      await aplicar(construirEscenario(escenario.ambiente, { avatar, personajes: escenario.personajes, momento: escenario.momento, clima: escenario.clima }));
+      $('estado').textContent = '¡Listo! Mira tu ventana.';
+      return;
+    }
+  } catch {}
+  mostrarAlternativas(alternativas);
+  $('estado').textContent = 'Elige una de estas aventuras.';
 }
 
 $('formPeticion').onsubmit = (e) => {

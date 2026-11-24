@@ -16,7 +16,8 @@ import { abrirDB, hash, ROLES, EMOJIS_REACCION, PIEZAS_PUZLE } from './db.mjs';
 import { crearPlanta, ANIMOS } from './planta.mjs';
 import { crearJuego } from './juego.mjs';
 import { transcribir, vozDisponible, calentar, ejecutar, FFMPEG, ffmpegDisponible } from './voz.mjs';
-import { construirEscenario } from '../web/lib/escenario.js';
+import { construirEscenario, interpretar } from '../web/lib/escenario.js';
+import { entender, iaDisponible, calentarIA, pararIA } from './ia.mjs';
 import { AVATARES } from '../web/lib/catalogo.js';
 
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));
@@ -276,7 +277,7 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
     return {
       alias: e.alias, avatar: e.avatar, escena: e.escena ? JSON.parse(e.escena) : null, fotos, lado: e.lado || 3,
       puzle: { total: PIEZAS_PUZLE, hechas, mensaje: hechas >= PIEZAS_PUZLE ? e.mensaje_puzle : null },
-      voz: vozDisponible(), emojis: EMOJIS_REACCION, chats: juego.chatsNino(espacioId),
+      voz: vozDisponible(), ia: iaDisponible(), emojis: EMOJIS_REACCION, chats: juego.chatsNino(espacioId),
       comunidad: !!e.comunidad, planta: planta.conversaciones(espacioId), animos: ANIMOS,
     };
   }
@@ -432,6 +433,20 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
         avisar(a.espacio_id, 'aportador', 'actualizar');
         return json(res, 200, { id: p.id });
       }
+    }
+
+    // IA local: frase libre que las reglas no entienden → escenario del catálogo. La frase no se guarda.
+    if (ruta === '/api/ia' && m === 'POST') {
+      const av = acceso(req, 'ventana');
+      limitar(`ia:${av.id}`, 30);
+      if (!iaDisponible()) throw new ErrorHttp(503, 'ia_no_disponible');
+      const frase = limpiarTexto((await leerJSON(req)).frase, 200);
+      const reglas = interpretar(frase, { avatar: repo.espacio(av.espacio_id).avatar });
+      if (reglas.tipo === 'escenario') return json(res, 200, { escenario: reglas });
+      if (reglas.tipo === 'alternativas' && reglas.motivo === 'contenido') return json(res, 200, { escenario: null });
+      const trabajo = colaVoz.then(() => entender(frase, { avatar: repo.espacio(av.espacio_id).avatar }));
+      colaVoz = trabajo.catch(() => {});
+      return json(res, 200, { escenario: await trabajo });
     }
 
     if (ruta === '/api/voz' && m === 'POST') {
@@ -787,7 +802,7 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
     }
   }
 
-  return { manejar, repo, claveNueva, infoDemo, cerrar: () => { clearInterval(limpieza); clearInterval(entregas); clearInterval(reinicio); repo.db.close(); } };
+  return { manejar, repo, claveNueva, infoDemo, cerrar: () => { pararIA(); clearInterval(limpieza); clearInterval(entregas); clearInterval(reinicio); repo.db.close(); } };
 }
 
 // ---------- Arranque ----------
@@ -810,7 +825,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === normalize(process.argv
   crearHttp(app.manejar).listen(PUERTO_LOCAL, '127.0.0.1');
   // La wifi solo se abre con HTTPS: sin certificados, nada sale de este ordenador.
   if (https) crearHttps({ cert: readFileSync(cert), key: readFileSync(key) }, app.manejar).listen(PUERTO, '0.0.0.0');
-  calentar();
+  calentar().then(calentarIA);
   console.log(`\nVentana Mágica · servidor local`);
   console.log(`  En este ordenador: http://localhost:${PUERTO_LOCAL}`);
   if (https) for (const ip of ipsLocales()) console.log(`  En la wifi: https://${ip}:${PUERTO}`);
