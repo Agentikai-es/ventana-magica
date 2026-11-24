@@ -9,7 +9,8 @@ Reglas del ciclo automático:
 - Marca cada punto hecho con [x] y una línea de qué se hizo.
 
 ## Prioridad 1 · que la demo no falle
-- [ ] Comprobar en el navegador (tablet 1180×820 y móvil 390×844) el recorrido completo de la demo con los códigos fijos y arreglar lo que se vea roto.
+- [x] Comprobar en el navegador (tablet 1180×820 y móvil 390×844) el recorrido completo de la demo con los códigos fijos y arreglar lo que se vea roto.
+  Hecho 24 nov: 123456/111111/222222 entran en su pantalla; foto con pistas → aprobación → carta en la ventana; tablet, aprobar y enviar se ven bien y sin errores de consola. Nada roto.
 - [ ] Que la caché del service worker cambie de versión sola cuando cambian los archivos (que nadie vea una versión vieja el día de la demo).
 - [ ] Mensajes de error claros si el servidor no tiene voz (falta el modelo) o ffmpeg; que la tablet ofrezca texto y lugares sin quedarse esperando.
 - [ ] `scripts/comprobar.sh`: chequeo rápido antes de la demo (servidor responde, voz lista, certificado vale para la IP actual, códigos demo activos).

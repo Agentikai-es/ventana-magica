@@ -21,6 +21,10 @@
 - **Ligera:** la web se sirve comprimida (≈48 KB en total) con caché y ETag; la voz es un solo ejecutable de 7,5 MB (antes 146 MB de código fuente); `npm run paquete` crea el paquete mínimo para la caja.
 - Pruebas: 61 de 61 en verde.
 
+## Ciclo automático (hasta el 26 nov, 09:30)
+- Backlog en `BACKLOG.md`; una mejora por vuelta, solo se sube con las pruebas en verde.
+- 24 nov: recorrido de la demo con códigos fijos comprobado en tablet y móvil, sin fallos.
+
 ## Falta
 - Instalar en una Raspberry Pi real (`bash scripts/instalar-raspberry.sh`) y probar su wifi propia.
 - Probar con una tablet y dos móviles reales; ensayar el pitch dos veces; grabar el vídeo de respaldo.
