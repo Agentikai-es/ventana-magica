@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ventana Peque · Ventana Mágica</title>
+  <style>
+    :root {
+      --noche: #161b33; --noche-2: #1f2647; --crema: #fbf3e4; --marco: #f1e2c6; --marco-sombra: #c9b28a;
+      --texto: #f5f1ea; --suave: #b9b8cf; --acento: #ffb86b; --acento-2: #8fd3c7;
+      --redondo: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--redondo); background: radial-gradient(circle at 50% -20%, #2c3566, var(--noche) 60%); color: var(--texto); min-height: 100vh; }
+    main { max-width: 960px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+    header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+    header h1 { font-size: 1.35rem; margin: 0; letter-spacing: .01em; }
+    header p { margin: 0; color: var(--suave); font-size: .95rem; }
+
+    /* ---------- La ventana ---------- */
+    .marco { background: var(--marco); padding: 14px; border-radius: 34px; box-shadow: 0 2px 0 var(--marco-sombra) inset, 0 18px 50px #0007; }
+    #ventana { position: relative; aspect-ratio: 16 / 10; border-radius: 22px; overflow: hidden; background: #8fd3f4; box-shadow: 0 0 0 3px #e2cfa9 inset; }
+    #escena, .capa { position: absolute; inset: 0; }
+    .capa-fondo { transition: background .8s ease; }
+    .capa-decorado svg { width: 100%; height: 100%; display: block; }
+    #titulo { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); z-index: 5; background: #ffffffd9; color: #2b2d42;
+      padding: .35rem 1rem; border-radius: 999px; font-weight: 700; font-size: clamp(.95rem, 2.2vw, 1.25rem); white-space: nowrap; box-shadow: 0 4px 14px #0003; }
+    .pieza { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 2px;
+      animation: entrar .7s cubic-bezier(.2,.9,.3,1.3) both, flotar 5s ease-in-out infinite; }
+    .pieza .emoji { line-height: 1; filter: drop-shadow(0 4px 6px #0004); }
+    .objeto .emoji { font-size: clamp(1.6rem, 4.5vw, 2.6rem); }
+    .personaje .emoji { font-size: clamp(2.4rem, 7vw, 4.2rem); }
+    .avatar .emoji { font-size: clamp(3.2rem, 10vw, 6rem); filter: drop-shadow(0 0 18px #fff9) drop-shadow(0 6px 8px #0005); }
+    .etiqueta { background: #ffffffe0; color: #2b2d42; border-radius: 999px; padding: .1rem .55rem; font-size: clamp(.62rem, 1.5vw, .8rem); font-weight: 600; white-space: nowrap; }
+    .avatar .etiqueta { background: var(--acento); font-size: clamp(.7rem, 1.7vw, .95rem); }
+    @keyframes entrar { from { opacity: 0; transform: translate(-50%, -30%) scale(.6); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+    @keyframes flotar { 50% { translate: 0 -6px; } }
+    @media (prefers-reduced-motion: reduce) { .pieza { animation: none; } .capa-fondo { transition: none; } }
+
+    /* ---------- Petición ---------- */
+    .pedir { display: flex; gap: .6rem; margin-top: 1.1rem; }
+    .pedir input { flex: 1; min-width: 0; font: inherit; font-size: 1.15rem; padding: .8rem 1.1rem; border-radius: 999px; border: 2px solid #ffffff22;
+      background: var(--noche-2); color: var(--texto); }
+    .pedir input:focus { outline: 3px solid var(--acento); outline-offset: 2px; }
+    button { font: inherit; cursor: pointer; border: 0; border-radius: 999px; }
+    .principal { background: var(--acento); color: #2b2d42; font-weight: 700; font-size: 1.1rem; padding: .8rem 1.3rem; }
+    .mic { background: var(--noche-2); color: var(--texto); font-size: 1.1rem; padding: .8rem 1.1rem; border: 2px solid #ffffff22; }
+    .mic[aria-pressed="true"] { background: #e35d6a; border-color: #e35d6a; color: #fff; }
+    button:focus-visible { outline: 3px solid var(--acento-2); outline-offset: 2px; }
+    #estado { color: var(--suave); margin: .6rem .4rem 0; min-height: 1.4em; }
+
+    .narracion { margin-top: .9rem; background: var(--crema); color: #2b2d42; border-radius: 20px; padding: 1rem 1.2rem; display: grid; grid-template-columns: 1fr auto; gap: .8rem; align-items: center; }
+    #narracion { margin: 0; font-size: 1.1rem; line-height: 1.5; }
+    .narracion .acciones { display: flex; flex-direction: column; gap: .4rem; }
+    .narracion button { background: #2b2d42; color: #fff; padding: .55rem 1rem; font-size: .95rem; white-space: nowrap; }
+    #alternativas { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .8rem; }
+    #alternativas:empty { display: none; }
+    #alternativas button { background: var(--acento-2); color: #13324a; font-weight: 700; font-size: 1.05rem; padding: .7rem 1.2rem; }
+
+    h2 { font-size: 1rem; color: var(--suave); font-weight: 600; margin: 1.4rem 0 .5rem; }
+    .fila { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .chip { background: var(--noche-2); color: var(--texto); border: 2px solid #ffffff1a; padding: .5rem .9rem; font-size: 1rem; }
+    .chip[aria-pressed="true"] { border-color: var(--acento); background: #3a3252; }
+
+    /* ---------- Zona de adultos (F2 y F3) ---------- */
+    details { margin-top: 2rem; background: #ffffff0a; border-radius: 18px; padding: .8rem 1.1rem; }
+    summary { cursor: pointer; font-weight: 700; }
+    section { padding: .8rem 0; border-top: 1px solid #ffffff1a; margin-top: .8rem; }
+    section h3 { font-size: 1.05rem; margin: 0 0 .4rem; }
+    section button { background: var(--noche-2); color: var(--texto); border: 2px solid #ffffff22; padding: .5rem .9rem; margin: .2rem .2rem .2rem 0; }
+    #puzle { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; max-width: 420px; margin-top: .5rem; }
+    #puzle div { aspect-ratio: 1; background: #222845; border: 1px dashed #556; border-radius: 6px; display: grid; place-items: center; font-size: .65rem; text-align: center; }
+    #puzle div.ocupada { background: #3b5b3b; border: 1px solid #8f8; }
+    #cuento { white-space: pre-line; line-height: 1.5; max-width: 640px; }
+    .aviso { font-size: .85rem; color: var(--suave); }
+    @media (max-width: 600px) { .pedir { flex-wrap: wrap; } .pedir input { flex-basis: 100%; } .narracion { grid-template-columns: 1fr; } .narracion .acciones { flex-direction: row; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>🪟 Ventana Peque</h1>
+    <p>Pide un lugar y entra en él.</p>
+  </header>
+
+  <div class="marco">
+    <div id="ventana" aria-live="polite">
+      <div id="escena"></div>
+      <div id="titulo">Tu ventana</div>
+    </div>
+  </div>
+
+  <form class="pedir" id="formPeticion" autocomplete="off">
+    <input id="peticion" aria-label="¿Adónde quieres ir?" placeholder="Quiero estar en un castillo con dragones…" maxlength="200">
+    <button type="button" class="mic" id="mic" aria-pressed="false" title="Hablar">🎤 Hablar</button>
+    <button type="submit" class="principal">Crear ✨</button>
+  </form>
+  <p id="estado">Escribe o toca «Hablar» y di adónde quieres ir.</p>
+
+  <div class="narracion">
+    <p id="narracion"></p>
+    <div class="acciones">
+      <button id="leerAventura" type="button">🔊 Escuchar</button>
+      <button id="musica" type="button" aria-pressed="false">🎵 Música</button>
+    </div>
+  </div>
+  <div id="alternativas"></div>
+
+  <h2>Elige quién eres</h2>
+  <div class="fila" id="avatares"></div>
+
+  <h2>O toca un lugar</h2>
+  <div class="fila" id="botones"></div>
+
+  <details>
+    <summary>Zona de adultos · puzle y cuento</summary>
+    <section>
+      <h3>Puzle colectivo</h3>
+      <p class="aviso">Cada aporte queda pendiente hasta que un adulto lo aprueba. Solo se ve la pieza aprobada.</p>
+      <div>
+        <button id="subir">Simular aporte de amigo (prueba)</button>
+        <button id="aprobar">Aprobar último aporte (adulto)</button>
+        <button id="rechazar">Rechazar último aporte (adulto)</button>
+      </div>
+      <p id="puzleEstado" class="aviso"></p>
+      <div id="puzle"></div>
+    </section>
+    <section>
+      <h3>Cuento de la noche</h3>
+      <p class="aviso">Voz de respaldo del navegador. Cuando haya permiso por escrito, aquí irá la voz de la familia.</p>
+      <button id="leer">Leer el cuento</button>
+      <button id="parar">Parar</button>
+      <div id="cuento"></div>
+    </section>
+  </details>
+</main>
+
+<script type="module">
+  import { AMBIENTES, AVATARES, PERSONAJES } from './catalogo.js';
+  import { interpretar, construirEscenario } from './escenario.js';
+  import { componerEscena, pintarEscena } from './escena.js';
+  import { narrar } from './narracion.js';
+  import { crearMusica } from './sonido.js';
+  import { crearPuzle, añadirAporte, aprobarAporte, rechazarAporte, piezasVisibles, ESTADO } from './puzle.js';
+  import { construirCuento } from './cuento.js';
+
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- Estado de la sesión (solo en memoria; nada se guarda) ----------
+  let avatarElegido = null;
+  let actual = null;
+  let escuchando = false;
+  let musicaOn = false;
+  const musica = crearMusica();
+
+  // ---------- Ventana Mágica (F1 + v2) ----------
+  function mostrarEscenario(esc) {
+    actual = esc;
+    pintarEscena($('escena'), componerEscena(esc));
+    $('titulo').textContent = esc.nombre;
+    $('narracion').textContent = narrar(esc);
+    $('alternativas').replaceChildren();
+    if (musicaOn) musica.tocar(esc.sonido);
+  }
+
+  function mostrarAlternativas(r) {
+    $('narracion').textContent = narrar(r);
+    const caja = $('alternativas');
+    caja.replaceChildren();
+    for (const alt of r.alternativas) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = `${PERSONAJES[alt.personajes[0]].emoji} ${alt.nombre}`;
+      b.onclick = () => mostrarEscenario(construirEscenario(alt.ambiente, { avatar: avatarElegido }));
+      caja.appendChild(b);
+    }
+  }
+
+  function pedir(frase) {
+    const r = interpretar(frase, { avatar: avatarElegido });
+    if (r.tipo === 'escenario') mostrarEscenario(r);
+    else mostrarAlternativas(r);
+    return r;
+  }
+
+  $('formPeticion').onsubmit = (e) => {
+    e.preventDefault();
+    const r = pedir($('peticion').value);
+    $('estado').textContent = r.tipo === 'escenario' ? '¡Listo! Mira tu ventana.' : 'Elige una de estas aventuras.';
+    $('peticion').value = '';
+  };
+
+  // Lugares de respaldo (siempre funcionan, sin voz).
+  for (const [id, a] of Object.entries(AMBIENTES)) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip';
+    b.textContent = `${PERSONAJES[a.personajes[0]].emoji} ${a.nombre}`;
+    b.onclick = () => mostrarEscenario(construirEscenario(id, { avatar: avatarElegido }));
+    $('botones').appendChild(b);
+  }
+
+  // Avatares del catálogo (nunca fotos).
+  for (const [id, av] of Object.entries(AVATARES)) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip';
+    b.setAttribute('aria-pressed', 'false');
+    b.textContent = `${av.emoji} ${av.nombre}`;
+    b.onclick = () => {
+      avatarElegido = id;
+      for (const x of $('avatares').children) x.setAttribute('aria-pressed', String(x === b));
+      if (actual) mostrarEscenario(construirEscenario(actual.ambiente, { avatar: id, personajes: actual.personajes, sustituido: actual.sustituido }));
+    };
+    $('avatares').appendChild(b);
+  }
+
+  // ---------- Voz (API del navegador; el audio no se guarda) ----------
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec = null;
+  if (!SR) {
+    $('mic').disabled = true;
+    $('mic').title = 'La voz no está disponible en este navegador';
+    $('estado').textContent = 'La voz no está disponible en este navegador. Escribe o usa los botones.';
+  } else {
+    rec = new SR();
+    rec.lang = 'es-ES';
+    rec.continuous = true;
+    rec.interimResults = false;
+    rec.onresult = (e) => {
+      const frase = e.results[e.results.length - 1][0].transcript;
+      const r = pedir(frase);
+      $('estado').textContent = r.tipo === 'escenario' ? `He oído «${frase}».` : `He oído «${frase}». Elige una de estas aventuras.`;
+    };
+    rec.onerror = (e) => {
+      if (e.error === 'not-allowed') { escuchando = false; marcarMic(); }
+      $('estado').textContent = 'No puedo escuchar ahora. Escribe o usa los botones.';
+    };
+    rec.onend = () => { if (escuchando && !speechSynthesis.speaking) { try { rec.start(); } catch {} } };
+  }
+
+  function marcarMic() {
+    $('mic').setAttribute('aria-pressed', String(escuchando));
+    $('mic').textContent = escuchando ? '⏹ Parar' : '🎤 Hablar';
+  }
+
+  $('mic').onclick = () => {
+    if (!rec) return;
+    escuchando = !escuchando;
+    marcarMic();
+    if (escuchando) { try { rec.start(); } catch {} $('estado').textContent = 'Te escucho… di adónde quieres ir.'; }
+    else { rec.stop(); $('estado').textContent = 'He dejado de escuchar.'; }
+  };
+
+  // Lectura en voz alta (voz de respaldo). Se pausa el micro para que no se oiga a sí misma.
+  function leer(texto) {
+    if (!('speechSynthesis' in window) || !texto) {
+      $('estado').textContent = 'La lectura en voz no está disponible en este navegador.';
+      return;
+    }
+    speechSynthesis.cancel();
+    if (rec && escuchando) { try { rec.stop(); } catch {} }
+    const u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-ES';
+    u.rate = 0.9;
+    u.onend = () => { if (rec && escuchando) { try { rec.start(); } catch {} } };
+    speechSynthesis.speak(u);
+  }
+  $('leerAventura').onclick = () => leer($('narracion').textContent);
+
+  $('musica').onclick = () => {
+    musicaOn = !musicaOn;
+    $('musica').setAttribute('aria-pressed', String(musicaOn));
+    $('musica').textContent = musicaOn ? '🔇 Silencio' : '🎵 Música';
+    if (musicaOn && actual) musica.tocar(actual.sonido); else musica.parar();
+  };
+
+  // ---------- Puzle colectivo (F2) ----------
+  let puzle = crearPuzle(12);
+  let contador = 0;
+
+  function pintarPuzle() {
+    const visibles = piezasVisibles(puzle);
+    $('puzle').replaceChildren();
+    for (let i = 0; i < puzle.totalPiezas; i++) {
+      const c = document.createElement('div');
+      if (visibles[i]) { c.className = 'ocupada'; c.textContent = visibles[i].autor; }
+      $('puzle').appendChild(c);
+    }
+    const pendientes = puzle.aportes.filter((a) => a.estado === ESTADO.PENDIENTE).length;
+    $('puzleEstado').textContent = `Piezas: ${visibles.length}/${puzle.totalPiezas} · pendientes de aprobar: ${pendientes}`;
+    pintarCuento();
+  }
+
+  function ultimoPendiente() {
+    return [...puzle.aportes].reverse().find((a) => a.estado === ESTADO.PENDIENTE);
+  }
+
+  $('subir').onclick = () => {
+    contador += 1;
+    const r = añadirAporte(puzle, { tipo: 'image/png', autor: `Amigo ${contador}`, permisoEscrito: true });
+    if (r.ok) puzle = r.puzle;
+    pintarPuzle();
+  };
+  $('aprobar').onclick = () => {
+    const p = ultimoPendiente();
+    if (!p) return;
+    const r = aprobarAporte(puzle, p.id);
+    if (r.ok) puzle = r.puzle;
+    pintarPuzle();
+  };
+  $('rechazar').onclick = () => {
+    const p = ultimoPendiente();
+    if (!p) return;
+    const r = rechazarAporte(puzle, p.id);
+    if (r.ok) puzle = r.puzle;
+    pintarPuzle();
+  };
+
+  // ---------- Cuento de la noche (F3) ----------
+  const BASE = 'Había una vez un zorro que quería ver el mar. Una noche, llegó [APORTE] con una idea. ' +
+    'El zorro cruzó el bosque y encontró una playa llena de luces. Y así, con una sonrisa, se durmió.';
+  let textoCuento = '';
+
+  function pintarCuento() {
+    textoCuento = construirCuento(BASE, piezasVisibles(puzle));
+    $('cuento').textContent = textoCuento;
+  }
+
+  $('leer').onclick = () => leer(textoCuento);
+  $('parar').onclick = () => { if ('speechSynthesis' in window) speechSynthesis.cancel(); };
+
+  // ---------- Inicio ----------
+  mostrarEscenario(construirEscenario('playa'));
+  $('narracion').textContent = 'Pídele a la ventana adónde quieres ir. Por ejemplo: «quiero estar en un castillo con dragones amables».';
+  pintarPuzle();
+</script>
+</body>
+</html>

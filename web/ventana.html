@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#161b33">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <title>Mi ventana mágica</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <style>
+    .rejilla { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 1.5rem; align-items: start; }
+    @media (max-width: 900px) { .rejilla { grid-template-columns: 1fr; } }
+    .derecha-barra { display: flex; align-items: center; gap: .6rem; }
+    #conexion { font-size: .9rem; display: inline-flex; align-items: center; gap: .4rem; margin: 0; }
+    #conexion::before { content: ""; width: .6rem; height: .6rem; border-radius: 50%; background: var(--suave); }
+    #conexion.ok::before { background: var(--ok); box-shadow: 0 0 0 3px #6fcf9733; }
+    #conexion.mal::before { background: var(--acento); }
+    .soy, .redondo { background: var(--noche-2); color: var(--texto); border: 2px solid #8d8fae55; font-weight: 700; }
+    .soy { padding: .45rem .9rem .45rem .6rem; }
+    .soy .emoji-avatar { font-size: 1.5rem; line-height: 1; }
+    .redondo { width: 2.75rem; height: 2.75rem; }
+    .redondo[aria-pressed="false"] { color: var(--suave); opacity: .7; }
+    .pedir { display: flex; gap: .6rem; margin-top: 1rem; }
+    .pedir input { flex: 1; min-width: 0; font-size: 1.15rem; padding: .8rem 1.1rem; border-radius: 999px; }
+    .mic { background: var(--noche-2); color: var(--texto); font-size: 1.1rem; font-weight: 700; padding: .8rem 1.2rem; border: 2px solid #8d8fae; }
+    .mic.grabando { background: var(--peligro); border-color: var(--peligro); color: #fff; animation: latir 1s ease-in-out infinite; }
+    @keyframes latir { 50% { box-shadow: 0 0 0 8px #e35d6a44; } }
+    #estado { color: var(--suave); margin: .55rem .6rem .3rem; min-height: 1.4em; }
+    .narracion { margin-top: .4rem; background: var(--crema); color: var(--tinta); border-radius: 22px; padding: 1rem 1.2rem; display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: center; box-shadow: 0 8px 24px #0004; }
+    #narracion { margin: 0; font-size: 1.08rem; line-height: 1.5; max-width: 62ch; }
+    .narracion .acciones { display: flex; flex-direction: column; gap: .45rem; }
+    .narracion button { background: var(--tinta); color: #fff; padding: .6rem 1.05rem; font-size: .98rem; font-weight: 700; white-space: nowrap; justify-content: flex-start; }
+    .narracion button.calido { background: var(--acento); color: var(--tinta); }
+    #alternativas { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .8rem; }
+    #alternativas:empty { display: none; }
+    #alternativas button { background: var(--acento-2); color: #13324a; font-weight: 700; font-size: 1.05rem; padding: .7rem 1.2rem; }
+    /* Pestañas */
+    .pestanas { display: grid; grid-template-columns: repeat(3, 1fr); gap: .3rem; background: var(--noche-2); padding: .3rem; border-radius: 18px; }
+    .pestanas button { position: relative; flex-direction: column; gap: .15rem; background: transparent; color: var(--suave); border-radius: 14px; padding: .55rem .3rem; font-weight: 700; font-size: .9rem; }
+    .pestanas button[aria-selected="true"] { background: var(--crema); color: var(--tinta); box-shadow: 0 4px 12px #0003; }
+    .pestanas .icono { width: 1.4rem; height: 1.4rem; }
+    .globo { position: absolute; top: .25rem; right: .7rem; min-width: 1.3rem; height: 1.3rem; padding: 0 .3rem; border-radius: 99px; background: var(--peligro); color: #fff; font-size: .75rem; display: grid; place-items: center; }
+    .panel-lado { display: grid; gap: .7rem; margin-top: .9rem; }
+    .panel-lado h3 { margin: .3rem 0 0; font-size: 1rem; color: var(--texto); }
+    /* Buzón */
+    .cartas { display: grid; gap: .55rem; }
+    .carta { justify-content: flex-start; gap: .8rem; text-align: left; background: var(--crema); color: var(--tinta); border-radius: 18px; padding: .7rem .9rem; box-shadow: 0 6px 16px #0003; animation: llegar .6s cubic-bezier(.2,.9,.3,1.3) both; }
+    .carta .sobre { width: 3rem; height: 2.2rem; flex: none; border-radius: 6px; background: linear-gradient(160deg, #ffb86b, #f08a5d); position: relative; box-shadow: inset 0 -2px 0 #0002; }
+    .carta .sobre::after { content: ""; position: absolute; inset: 0; border-radius: 6px; background: linear-gradient(to bottom right, transparent 48%, #fff8 50%, transparent 52%), linear-gradient(to bottom left, transparent 48%, #fff8 50%, transparent 52%); }
+    .carta.acertijo .sobre { background: linear-gradient(160deg, #a78bfa, #6d5bd0); }
+    .carta b { display: block; font-size: 1rem; }
+    .carta small { color: #5d5f7a; font-weight: 600; }
+    @keyframes llegar { from { opacity: 0; transform: translateY(-14px) rotate(-3deg); } }
+    .album { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; background: var(--marco); padding: 6px; border-radius: 16px; }
+    .album button, .album div { aspect-ratio: 1; border-radius: 9px; padding: 0; overflow: hidden; position: relative; }
+    .album div { background: #e9dcc4; border: 2px dashed #c9b28a; }
+    .album img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .album .r { position: absolute; right: 3px; bottom: 1px; font-size: 1rem; }
+    .barra-progreso { height: 8px; border-radius: 99px; background: var(--noche-2); overflow: hidden; }
+    .barra-progreso span { display: block; height: 100%; background: var(--acento); border-radius: 99px; transition: width .6s cubic-bezier(.2,.8,.2,1); }
+    #premio { background: var(--acento); color: var(--tinta); border-radius: 16px; padding: .9rem 1rem; font-weight: 700; text-align: center; }
+    /* Mi gente */
+    .personas { display: grid; gap: .45rem; }
+    .persona { justify-content: flex-start; gap: .75rem; background: var(--noche-2); color: var(--texto); border: 2px solid #ffffff14; border-radius: 18px; padding: .6rem .8rem; text-align: left; }
+    .inicial { width: 2.6rem; height: 2.6rem; flex: none; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: var(--tinta); background: var(--acento-2); }
+    .persona .txt { display: grid; min-width: 0; }
+    .persona .txt small { color: var(--suave); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .persona .punto { margin-left: auto; width: .7rem; height: .7rem; border-radius: 50%; background: var(--peligro); flex: none; }
+    /* Lugares */
+    .lugares { display: grid; grid-template-columns: 1fr 1fr; gap: .45rem; }
+    .lugar { justify-content: flex-start; text-align: left; gap: .55rem; background: var(--noche-2); color: var(--texto); border: 2px solid #ffffff14; border-radius: 16px; padding: .5rem .65rem; font-size: .95rem; font-weight: 600; min-height: 3rem; }
+    .lugar .e { font-size: 1.45rem; line-height: 1; }
+    .lugar[aria-pressed="true"] { border-color: var(--acento); background: #3a3252; }
+    /* Avatar */
+    #avatar { border: 0; border-radius: 26px; background: var(--crema); color: var(--tinta); max-width: min(92vw, 520px); padding: 1.3rem; }
+    #avatar::backdrop { background: #0b0e1ecc; }
+    #avatar h2 { margin: 0 0 .9rem; color: var(--tinta); }
+    .avatares { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem; }
+    .avatares button { flex-direction: column; gap: .3rem; background: #fff; color: var(--tinta); border-radius: 18px; padding: .7rem .3rem; font-weight: 700; font-size: .9rem; border: 3px solid transparent; }
+    .avatares button span { font-size: 2.3rem; line-height: 1; }
+    .avatares button[aria-pressed="true"] { border-color: var(--acento); background: #fff4e6; }
+    .aviso-llegada { position: fixed; left: 50%; top: 1rem; transform: translateX(-50%); background: var(--acento); color: var(--tinta); font-weight: 800;
+      padding: .85rem 1.4rem; border-radius: 999px; box-shadow: 0 12px 30px #0006; z-index: 50; animation: bajar .5s cubic-bezier(.2,.9,.3,1.3) both; }
+    @keyframes bajar { from { transform: translate(-50%, -150%); } }
+    .postal .sobre-colgado { position: absolute; inset: 4% 4% 14%; border-radius: 2px; background: linear-gradient(160deg, #ffb86b, #f08a5d); display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 2.4cqi; text-align: center; line-height: 1.1; }
+    @media (max-width: 600px) { .pedir { flex-wrap: wrap; } .pedir input { flex-basis: 100%; } .narracion { grid-template-columns: 1fr; } .narracion .acciones { flex-direction: row; } }
+  </style>
+</head>
+<body>
+<main>
+  <header class="barra">
+    <h1><span data-icono="ventana"></span><span id="saludo">Mi ventana</span></h1>
+    <div class="derecha-barra">
+      <button class="redondo" id="limpiar" type="button" aria-label="Limpiar la pantalla" title="Limpiar la pantalla"><span data-icono="gota"></span></button>
+      <button class="redondo" id="sonido" type="button" aria-pressed="true" aria-label="Sonido"><span data-icono="altavoz"></span></button>
+      <button class="soy" id="soy" type="button" aria-haspopup="dialog"><span class="emoji-avatar" id="soyEmoji" aria-hidden="true">🦊</span><span id="soyNombre">Soy…</span></button>
+      <p id="conexion" class="aviso">Conectando…</p>
+    </div>
+  </header>
+
+  <div class="rejilla">
+    <div>
+      <div class="marco">
+        <div class="vista" id="vista">
+          <div class="escena" id="escena"></div>
+          <div class="cuerda" id="cuerda" role="group" aria-label="Cartas que te han llegado"></div>
+          <div class="titulo-escena" id="titulo">Tu ventana</div>
+        </div>
+      </div>
+
+      <form class="pedir" id="formPeticion" autocomplete="off">
+        <input id="peticion" aria-label="¿Adónde quieres ir?" placeholder="Llévame a la Torre Eiffel de noche…" maxlength="200">
+        <button type="button" class="mic" id="mic"><span data-icono="micro"></span><span id="micTexto">Hablar</span></button>
+        <button type="submit" class="principal"><span data-icono="magia"></span>Crear</button>
+      </form>
+      <p id="estado" role="status">Di o escribe adónde quieres ir. También puedes pedir «que sea de noche», «que nieve» o «fiesta».</p>
+
+      <div class="narracion">
+        <p id="narracion"></p>
+        <div class="acciones">
+          <button id="leer" type="button"><span data-icono="altavoz"></span>Escuchar</button>
+          <button id="enviarPostal" class="calido" type="button"><span data-icono="enviar"></span>Mandar postal</button>
+        </div>
+      </div>
+      <div id="alternativas"></div>
+    </div>
+
+    <aside>
+      <div class="pestanas" role="tablist" aria-label="Secciones">
+        <button role="tab" id="tabBuzon" aria-controls="panelBuzon" aria-selected="true" type="button"><span data-icono="sobre"></span>Buzón<span class="globo oculto" id="globoBuzon"></span></button>
+        <button role="tab" id="tabGente" aria-controls="panelGente" aria-selected="false" type="button" tabindex="-1"><span data-icono="charla"></span>Mi gente<span class="globo oculto" id="globoGente"></span></button>
+        <button role="tab" id="tabLugares" aria-controls="panelLugares" aria-selected="false" type="button" tabindex="-1"><span data-icono="mapa"></span>Lugares</button>
+      </div>
+
+      <section class="panel-lado" id="panelBuzon" role="tabpanel" aria-labelledby="tabBuzon">
+        <div class="cartas" id="cartas"></div>
+        <p class="aviso oculto" id="sinCartas" style="margin:0">Aquí llegan las fotos y vídeos de tu familia y tu clase. Cada uno es un puzle con un misterio: ¿quién te lo envía y desde dónde?</p>
+        <h2 style="margin:.3rem 0 0;font-size:1rem;color:var(--texto)">Mi álbum</h2>
+        <div class="album" id="album"></div>
+        <div class="barra-progreso" aria-hidden="true"><span id="barraProgreso" style="width:0"></span></div>
+        <p id="progreso" class="aviso" style="margin:0"></p>
+        <div id="premio" class="oculto"></div>
+      </section>
+
+      <section class="panel-lado oculto" id="panelGente" role="tabpanel" aria-labelledby="tabGente">
+        <div class="personas" id="personas"></div>
+        <p class="aviso" style="margin:0">Escríbeles, mándales un audio, una postal con acertijo o una foto convertida en puzle. Antes de salir, lo ve la persona que te cuida.</p>
+      </section>
+
+      <section class="panel-lado oculto" id="panelLugares" role="tabpanel" aria-labelledby="tabLugares">
+        <div class="lugares" id="lugares"></div>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<!-- Juego: puzle → acertijo → descubierta -->
+<dialog class="hoja" id="juego" aria-labelledby="juegoTitulo">
+  <div class="hoja-cab"><h2 id="juegoTitulo">Una carta para ti</h2><button class="cerrar-x" type="button" data-cerrar aria-label="Cerrar">×</button></div>
+  <div class="hoja-cuerpo">
+    <div class="pasos" aria-hidden="true"><span id="paso1"></span><span id="paso2"></span><span id="paso3"></span></div>
+    <div id="juegoContenido"></div>
+  </div>
+</dialog>
+
+<!-- Chat con una persona -->
+<dialog class="hoja" id="chat" aria-labelledby="chatTitulo">
+  <div class="hoja-cab"><h2 id="chatTitulo">Mi gente</h2><button class="cerrar-x" type="button" data-cerrar aria-label="Cerrar">×</button></div>
+  <div class="hoja-cuerpo"><div class="burbujas" id="burbujas"></div></div>
+  <form class="componer" id="componer" autocomplete="off">
+    <div class="fila-c">
+      <input id="chatTexto" maxlength="200" aria-label="Escribe un mensaje" placeholder="Escribe un mensaje…">
+      <button class="principal" type="submit"><span data-icono="enviar"></span>Enviar</button>
+    </div>
+    <div class="herr">
+      <button type="button" id="chatAudio"><span data-icono="micro"></span><span id="chatAudioTexto">Audio</span></button>
+      <button type="button" id="chatPostal"><span data-icono="ventana"></span>Postal-acertijo</button>
+      <label class="boton herr-foto"><span data-icono="camara"></span>Foto-puzle<input type="file" id="chatFoto" accept="image/*" capture="environment" class="sr-only"></label>
+    </div>
+    <p class="aviso" id="chatAviso" role="status" style="margin:0;color:#4a4c66"></p>
+  </form>
+</dialog>
+
+<div id="limpieza" class="limpieza oculto" tabindex="-1" role="alert" aria-live="assertive">
+  <span data-icono="gota" class="gota-grande"></span>
+  <p>Pantalla bloqueada para limpiarla</p>
+  <b id="limpiezaCuenta">30</b>
+  <small>Pasa la toallita sin miedo: no se pulsa nada.</small>
+</div>
+
+<dialog id="avatar" aria-labelledby="tituloAvatar">
+  <h2 id="tituloAvatar">¿Quién eres hoy?</h2>
+  <div class="avatares" id="avatares"></div>
+</dialog>
+
+<script type="module" src="/ventana.js"></script>
+</body>
+</html>

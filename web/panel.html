@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel del hospital · Ventana Mágica</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <style>
+    form.crear { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
+    form.crear .ancho { grid-column: 1 / -1; }
+    @media (max-width: 640px) { form.crear { grid-template-columns: 1fr; } }
+    .casilla { display: flex; gap: .6rem; align-items: flex-start; font-weight: 600; }
+    .casilla input { width: 1.4rem; height: 1.4rem; margin-top: .1rem; }
+    .espacio { display: grid; gap: .8rem; margin-bottom: 1rem; }
+    .espacio header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .espacio h3 { margin: 0; font-size: 1.3rem; }
+    table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+    th, td { text-align: left; padding: .55rem .4rem; border-bottom: 1px solid #ffffff14; vertical-align: middle; }
+    th { color: var(--suave); font-weight: 600; font-size: .85rem; }
+    td .codigo { font-family: ui-monospace, Menlo, monospace; font-size: 1.3rem; letter-spacing: .12em; color: var(--acento); }
+    td button { padding: .45rem .8rem; font-size: .88rem; min-height: 2.2rem; }
+    .revocado { opacity: .5; text-decoration: line-through; }
+    .nueva { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .nueva input { flex: 1; min-width: 160px; }
+    .info { display: flex; gap: .6rem; flex-wrap: wrap; }
+    .info span { background: var(--noche-2); border-radius: 999px; padding: .3rem .8rem; font-size: .9rem; }
+    .error { color: #ffc4ca; min-height: 1.3em; font-weight: 600; }
+    #entrar { max-width: 420px; margin: 12vh auto 0; display: grid; gap: .9rem; }
+  </style>
+</head>
+<body>
+<main>
+  <form id="entrar" class="tarjeta oculto" autocomplete="off">
+    <h1 style="margin:0;display:flex;align-items:center;gap:.55rem"><span data-icono="hospital" style="color:var(--acento)"></span>Panel del hospital</h1>
+    <label for="clave">Clave del panel</label>
+    <input id="clave" type="password" required aria-describedby="errorEntrar">
+    <button class="principal" type="submit">Entrar</button>
+    <p class="error" id="errorEntrar" role="alert"></p>
+    <p class="aviso" style="margin:0">La clave aparece al arrancar el servidor por primera vez.</p>
+  </form>
+
+  <div id="contenido" class="oculto">
+    <header class="barra">
+      <h1><span data-icono="hospital"></span>Panel del hospital</h1>
+      <div class="info" id="info"></div>
+    </header>
+
+    <section class="tarjeta">
+      <h2 style="margin-top:0">Nuevo espacio para un niño</h2>
+      <form class="crear" id="crear">
+        <label>Alias del niño <span class="aviso">No uses el nombre real</span>
+          <input name="alias" maxlength="20" required placeholder="Leo" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+">
+        </label>
+        <label>Avatar
+          <select name="avatar" id="avatar"></select>
+        </label>
+        <label class="ancho">Quién enviará fotos <span class="aviso">Separados por comas: cada uno recibe su propio enlace</span>
+          <input name="aportadores" maxlength="200" value="Mamá, Abuela, Clase de 3.º B">
+        </label>
+        <label class="ancho">Mensaje al completar el puzle
+          <input name="mensaje" maxlength="120" value="¡Te esperamos en clase! Tu sitio sigue aquí.">
+        </label>
+        <label>Días hasta borrar todo (alta prevista)
+          <input name="dias" type="number" min="1" max="90" value="30">
+        </label>
+        <label>Puzle <span class="aviso">Sesiones cortas</span>
+          <select name="lado"><option value="3">3×3 · unos 2 minutos</option><option value="2">2×2 · más fácil, menos de 1 minuto</option></select>
+        </label>
+        <label>Referencia del consentimiento firmado
+          <input name="consentimiento" maxlength="40" required placeholder="Hoja 2026-11-24-01">
+        </label>
+        <label class="casilla ancho"><input type="checkbox" name="firmado" required>
+          <span>Los tutores legales han firmado el consentimiento (espacio, fotos y voz) y lo guarda el hospital.</span>
+        </label>
+        <div class="ancho"><button class="principal" type="submit">Crear espacio</button></div>
+      </form>
+      <p class="error" id="error" role="alert"></p>
+    </section>
+
+    <h2>Espacios activos</h2>
+    <p class="aviso">Envía a cada familiar su <b>enlace</b> (sirve 30 días). El <b>código</b> de 6 cifras es para entrar rápido en una tablet o móvil delante de ti: caduca en 30 minutos.</p>
+    <div id="espacios"></div>
+    <p class="aviso oculto" id="sinEspacios">No hay espacios todavía.</p>
+  </div>
+</main>
+<script type="module" src="/panel.js"></script>
+</body>
+</html>

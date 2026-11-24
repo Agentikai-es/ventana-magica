@@ -1,0 +1,9 @@
+{
+  "name": "Ventana Mágica",
+  "short_name": "Ventana",
+  "lang": "es",
+  "start_url": "/ventana",
+  "display": "standalone",
+  "background_color": "#161b33",
+  "theme_color": "#161b33"
+}

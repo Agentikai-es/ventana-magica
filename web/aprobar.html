@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#161b33">
+  <title>Revisar fotos</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <style>
+    main { max-width: 720px; }
+    .ahora { display: grid; grid-template-columns: 180px 1fr; gap: 1rem; align-items: center; }
+    .ahora .marco { padding: 6px; border-radius: 18px; }
+    .ahora .vista { border-radius: 12px; }
+    .ahora p { margin: 0; line-height: 1.5; }
+    @media (max-width: 520px) { .ahora { grid-template-columns: 1fr; } }
+    .revisar { display: grid; gap: 1rem; }
+    .foto-pendiente { display: grid; gap: .8rem; }
+    .foto-pendiente .pistas-rev { margin: 0; padding-left: 1.2rem; color: var(--suave); }
+    .foto-pendiente video, .foto-pendiente img { width: 100%; max-height: 60vh; object-fit: contain; background: #0006; border-radius: 16px; }
+    .foto-pendiente .de { margin: 0; font-weight: 700; font-size: 1.1rem; }
+    .foto-pendiente .txt { margin: 0; }
+    .botones { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+    .aprobar { background: var(--ok); color: #10301f; font-weight: 800; padding: .9rem; font-size: 1.1rem; }
+    .rechazar { background: var(--noche-3); color: var(--texto); padding: .9rem; font-size: 1.05rem; border: 2px solid #8d8fae; }
+    .comprobar { margin: .6rem 0 0; padding-left: 1.2rem; color: var(--suave); line-height: 1.6; }
+    .recientes { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: .6rem; }
+    .reciente { position: relative; margin: 0; }
+    .reciente img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; display: block; }
+    .reciente .insignia { position: absolute; left: 6px; bottom: 6px; background: #161b33e6; }
+    .reciente .reac { position: absolute; right: 6px; top: 4px; font-size: 1.4rem; }
+    .vacio { text-align: center; padding: 2rem 1rem; }
+    .vacio span { font-size: 2.5rem; display: block; }
+    #hecho { min-height: 1.4em; font-weight: 700; color: var(--ok); margin: .4rem 0 0; }
+    .ajustes { margin-top: 2.5rem; }
+    .ajustes .fila { margin-top: .8rem; }
+  </style>
+</head>
+<body>
+<main>
+  <header class="barra">
+    <h1><span data-icono="escudo"></span><span id="titulo">Revisar fotos</span></h1>
+    <p id="conexion"></p>
+  </header>
+
+  <section class="tarjeta ahora" aria-labelledby="tituloAhora">
+    <div class="marco" id="marcoAhora"><div class="vista"><div class="escena" id="escenaAhora"></div></div></div>
+    <div>
+      <h2 id="tituloAhora" style="margin:0 0 .3rem">Ahora mismo</h2>
+      <p id="textoAhora" class="aviso"></p>
+    </div>
+  </section>
+
+  <h2 id="tituloPendientes" tabindex="-1">Fotos esperando</h2>
+  <p id="hecho" role="status"></p>
+  <div class="revisar" id="pendientes"></div>
+
+  <h2 id="tituloMensajes" tabindex="-1">Mensajes esperando</h2>
+  <div class="revisar" id="mensajes"></div>
+
+  <details class="tarjeta" style="margin-top:1rem">
+    <summary><b>Antes de aprobar, comprueba</b></summary>
+    <ul class="comprobar">
+      <li>Que la foto, el vídeo o el audio son adecuados para un niño.</li>
+      <li>Que lo que manda el niño no muestra a otros pacientes ni datos del hospital.</li>
+      <li>Que no salen caras de otros niños sin permiso de sus familias.</li>
+      <li>Que no hay direcciones, matrículas ni otros datos personales.</li>
+    </ul>
+  </details>
+
+  <h2>Ya revisadas</h2>
+  <div class="recientes" id="recientes"></div>
+  <p class="aviso oculto" id="sinRecientes">Todavía ninguna.</p>
+
+  <details class="tarjeta ajustes">
+    <summary><b>Privacidad y datos</b></summary>
+    <p class="aviso" id="borrado"></p>
+    <div class="fila">
+      <a class="boton secundario" href="/api/aprobar/exportar" download>Descargar todos los datos</a>
+      <button class="peligro" id="borrarTodo" type="button">Borrar todas las fotos ahora</button>
+    </div>
+    <p class="aviso"><a href="/privacidad">Cómo cuidamos los datos</a></p>
+  </details>
+</main>
+<script type="module" src="/aprobar.js"></script>
+</body>
+</html>

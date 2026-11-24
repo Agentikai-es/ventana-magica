@@ -1,0 +1,15 @@
+{
+  "descripcion": "Casos de prueba de la ventana (F1). Frases ficticias. Esperado = clave de paisaje o null.",
+  "casos": [
+    { "id": 1, "frase": "playa", "esperado": "playa" },
+    { "id": 2, "frase": "quiero ver el bosque", "esperado": "bosque" },
+    { "id": 3, "frase": "montaña con nieve", "esperado": "montana" },
+    { "id": 4, "frase": "ver las estrellas", "esperado": "espacio" },
+    { "id": 5, "frase": "la selva, por favor", "esperado": "selva" },
+    { "id": 6, "frase": "el mar", "esperado": "mar" },
+    { "id": 7, "frase": "dinosaurio", "esperado": null },
+    { "id": 8, "frase": "", "esperado": null },
+    { "id": 9, "frase": "de noche", "esperado": null },
+    { "id": 10, "frase": "¡PLAYA!", "esperado": "playa" }
+  ]
+}

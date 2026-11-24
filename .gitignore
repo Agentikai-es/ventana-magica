@@ -1,0 +1,9 @@
+# Datos de niños, claves y certificados: nunca al repositorio.
+datos/
+certs/
+modelos/
+herramientas/
+.DS_Store
+ventana-magica.tar.gz
+vendor/
+.impeccable/

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#161b33">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <title>Ventana Mágica</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <style>
+    main { max-width: 460px; min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; text-align: center; gap: 1.2rem; padding: 1.5rem 1.25rem; }
+    .logo { font-size: 3.6rem; color: var(--acento); justify-self: center; }
+    h1 { margin: 0; font-size: 1.8rem; }
+    form { display: grid; gap: .8rem; min-width: 0; }
+    form > * { width: 100%; min-width: 0; }
+    #codigo { font-size: 2rem; text-align: center; letter-spacing: .35em; font-family: ui-monospace, Menlo, monospace; padding: .8rem; border-radius: 18px; }
+    #mensaje { color: #ffc4ca; min-height: 1.3em; margin: 0; }
+  </style>
+</head>
+<body>
+<main>
+  <div class="logo" data-icono="ventana"></div>
+  <h1>Ventana Mágica</h1>
+  <p class="aviso">Escribe el código de 6 cifras que te han dado. Si te han mandado un enlace, ábrelo directamente.</p>
+  <form id="form" autocomplete="off">
+    <input id="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="Código de 6 cifras" aria-describedby="mensaje" placeholder="······" required>
+    <button class="principal" type="submit">Entrar</button>
+  </form>
+  <p id="mensaje" role="alert"></p>
+  <p class="aviso">Sin cuentas ni contraseñas. Los datos se quedan en el servidor del hospital. <a href="/privacidad">Privacidad</a></p>
+</main>
+<script type="module" src="/inicio.js"></script>
+</body>
+</html>

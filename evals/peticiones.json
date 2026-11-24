@@ -1,0 +1,15 @@
+{
+  "descripcion": "Peticiones de prueba de la Ventana Mágica v2. Frases ficticias. 5 válidas, 3 con marca (equivalente original), 2 fuera de catálogo (3 alternativas seguras).",
+  "peticiones": [
+    { "id": 1, "grupo": "valida", "frase": "Quiero estar en un castillo con dragones amables", "esperado": { "tipo": "escenario", "ambiente": "castillo", "personajes": ["dragon_amable"] } },
+    { "id": 2, "grupo": "valida", "frase": "llévame al espacio con un robot", "esperado": { "tipo": "escenario", "ambiente": "espacio", "personajes": ["robot_amigo"] } },
+    { "id": 3, "grupo": "valida", "frase": "quiero ir a la selva a ver monos", "esperado": { "tipo": "escenario", "ambiente": "selva", "personajes": ["mono_saltarin"] } },
+    { "id": 4, "grupo": "valida", "frase": "quiero ser un superhéroe en la ciudad", "esperado": { "tipo": "escenario", "ambiente": "ciudad", "personajes": ["heroe_ciudad"] } },
+    { "id": 5, "grupo": "valida", "frase": "¡A la playa con las tortugas!", "esperado": { "tipo": "escenario", "ambiente": "playa", "personajes": ["tortuga_sabia"] } },
+    { "id": 6, "grupo": "marca", "frase": "Quiero ser Spider-Man en la ciudad", "esperado": { "tipo": "escenario", "ambiente": "ciudad", "personajes": ["heroe_ciudad"], "sustituido": true }, "prohibido": ["spider"] },
+    { "id": 7, "grupo": "marca", "frase": "quiero jugar con Elsa de Frozen", "esperado": { "tipo": "escenario", "ambiente": "castillo", "personajes": ["princesa_cristal"], "sustituido": true }, "prohibido": ["elsa", "frozen"] },
+    { "id": 8, "grupo": "marca", "frase": "quiero estar con los Avengers", "esperado": { "tipo": "escenario", "ambiente": "ciudad", "personajes": ["heroe_ciudad"], "sustituido": true }, "prohibido": ["avengers"] },
+    { "id": 9, "grupo": "fuera_catalogo", "frase": "quiero ir a un supermercado", "esperado": { "tipo": "alternativas", "motivo": "fuera_catalogo" } },
+    { "id": 10, "grupo": "fuera_catalogo", "frase": "llévame a un aeropuerto lleno de aviones", "esperado": { "tipo": "alternativas", "motivo": "fuera_catalogo" } }
+  ]
+}

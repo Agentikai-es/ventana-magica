@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#161b33">
+  <title>Ventana Mágica</title>
+  <link rel="stylesheet" href="/estilos.css">
+  <style>
+    main { max-width: 680px; font-size: 1.05rem; }
+    .hola { margin: 0 0 1.2rem; font-size: 1.1rem; line-height: 1.5; }
+    .conversa { background: var(--crema); color: var(--tinta); border-radius: 26px; padding: 1rem 1rem .4rem; box-shadow: 0 10px 30px #0005; }
+    .conversa h2 { color: var(--tinta); margin: .1rem .2rem .6rem; }
+    .conversa .componer { position: static; padding: .7rem 0 .8rem; background: transparent; }
+    .misterio { display: grid; gap: .6rem; }
+    .misterio .velo { aspect-ratio: 16 / 10; border-radius: 14px; display: grid; place-items: center; font-size: 2.6rem; letter-spacing: .3em; filter: saturate(1.2); position: relative; overflow: hidden; }
+    .misterio .velo::after { content: "?"; position: absolute; font-size: 4rem; font-weight: 900; color: #fff; text-shadow: 0 4px 18px #0006; letter-spacing: 0; }
+    .misterio .velo span { filter: blur(3px); opacity: .85; }
+    .misterio .opciones { grid-template-columns: 1fr; }
+    .subir { display: grid; gap: 1rem; }
+    .elegir { background: var(--acento); color: var(--tinta); border-radius: 24px; padding: 1.3rem; cursor: pointer; display: grid; gap: .3rem; place-items: center; font-weight: 800; font-size: 1.2rem; text-align: center; }
+    .elegir small { font-weight: 600; font-size: .95rem; }
+    .elegir input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+    .elegir:focus-within { outline: 3px solid #fff; outline-offset: 3px; box-shadow: 0 0 0 8px var(--tinta); }
+    .previa { display: grid; place-items: center; }
+    .previa canvas, .previa video { max-width: 100%; max-height: 46vh; border-radius: 16px; box-shadow: 0 10px 30px #0006; }
+    label.bloque { display: block; }
+    .pistas-form { display: grid; gap: .5rem; }
+    #enviar { font-size: 1.2rem; padding: 1rem; }
+    .lista { display: grid; gap: .7rem; }
+    .envio { display: grid; grid-template-columns: 76px 1fr auto; gap: .9rem; align-items: center; }
+    .envio img { width: 76px; height: 76px; object-fit: cover; border-radius: 12px; }
+    .envio p { margin: 0; }
+    .envio .derecha { display: grid; gap: .3rem; justify-items: end; }
+    .envio .reac { font-size: 2rem; line-height: 1; }
+    .envio .retirar { background: none; color: var(--suave); text-decoration: underline; padding: .3rem; font-size: .9rem; border-radius: 8px; }
+    #mensaje { margin: 0; font-weight: 600; }
+    .privacidad { margin-top: 2.5rem; }
+  </style>
+</head>
+<body>
+<main>
+  <header class="barra">
+    <h1><span data-icono="ventana"></span><span id="titulo">Ventana Mágica</span></h1>
+  </header>
+  <p class="hola" id="hola"></p>
+
+  <section class="conversa" aria-labelledby="tituloChat">
+    <h2 id="tituloChat">Con <span class="alias"></span></h2>
+    <div class="burbujas" id="burbujas"></div>
+    <form class="componer" id="componer" autocomplete="off">
+      <div class="fila-c">
+        <input id="chatTexto" maxlength="200" aria-label="Escribe un mensaje" placeholder="Escribe un mensaje…">
+        <button class="principal" type="submit"><span data-icono="enviar"></span>Enviar</button>
+      </div>
+      <div class="herr"><button type="button" id="chatAudio"><span data-icono="micro"></span><span id="chatAudioTexto">Mandar un audio</span></button></div>
+      <p class="aviso" id="chatAviso" role="status" style="margin:0;color:#4a4c66"></p>
+    </form>
+  </section>
+
+  <h2>Mándale una foto o un vídeo de tu día</h2>
+  <section class="tarjeta subir">
+    <label class="elegir">
+      <span data-icono="camara" style="font-size:2rem"></span>
+      <span>Elegir foto o vídeo</span>
+      <small>El perro, la comida, el patio del cole… (vídeos de hasta 20 segundos)</small>
+      <input type="file" id="archivo" accept="image/*,video/*">
+    </label>
+    <div class="previa oculto" id="previa"></div>
+    <label class="bloque" for="texto">Un mensaje para <span class="alias"></span> <span class="aviso">(lo leerá al descubrirte)</span></label>
+    <input id="texto" maxlength="80" placeholder="Ejemplo: Toby te espera en el parque">
+    <fieldset class="pistas-form" style="border:0;padding:0;margin:0">
+      <legend style="font-weight:700;margin-bottom:.4rem">Pistas para que <span class="alias"></span> adivine que eres tú</legend>
+      <input id="pista1" maxlength="60" aria-label="Pista 1" placeholder="Ejemplo: Te llevo al cole los lunes">
+      <input id="pista2" maxlength="60" aria-label="Pista 2" placeholder="Ejemplo: Hago las mejores croquetas">
+      <input id="pista3" maxlength="60" aria-label="Pista 3 (opcional)" placeholder="Una pista más (si quieres)">
+    </fieldset>
+    <label class="bloque" for="lugar">¿Desde dónde se la mandas?</label>
+    <select id="lugar"></select>
+    <label class="bloque" for="dias">¿Cuándo le llega?</label>
+    <select id="dias" aria-describedby="diasAyuda">
+      <option value="0">En cuanto la apruebe quien le cuida</option>
+      <option value="1">Mañana</option><option value="2">Pasado mañana</option><option value="3">Dentro de 3 días</option>
+      <option value="4">Dentro de 4 días</option><option value="5">Dentro de 5 días</option><option value="7">Dentro de una semana</option>
+    </select>
+    <p class="aviso" id="diasAyuda" style="margin:-.4rem 0 0">¿Estás de visita? Deja varias sorpresas programadas y le llegará una cada día, aunque no haya internet.</p>
+    <button class="principal" id="enviar" type="button" disabled>Mandar la sorpresa</button>
+    <p id="mensaje" role="status"></p>
+    <p class="aviso" style="margin:0" id="revisa"></p>
+  </section>
+
+  <h2>Lo que has mandado</h2>
+  <div class="lista" id="mios"></div>
+  <p class="aviso oculto" id="sinMios">Aún no has mandado nada.</p>
+
+  <p class="aviso privacidad">Mejor sin caras de otros niños, direcciones ni matrículas. A fotos, vídeos y audios se les quita la ubicación, y se borran solos en 30 días o cuando <span class="alias"></span> recibe el alta. <a href="/privacidad">Cómo cuidamos tus datos</a>.</p>
+</main>
+
+<dialog class="hoja" id="juego" aria-labelledby="juegoTitulo">
+  <div class="hoja-cab"><h2 id="juegoTitulo">Puzle</h2><button class="cerrar-x" type="button" data-cerrar aria-label="Cerrar">×</button></div>
+  <div class="hoja-cuerpo" id="juegoContenido"></div>
+</dialog>
+
+<script type="module" src="/enviar.js"></script>
+</body>
+</html>
