@@ -11,7 +11,8 @@ Reglas del ciclo automático:
 ## Prioridad 1 · que la demo no falle
 - [x] Comprobar en el navegador (tablet 1180×820 y móvil 390×844) el recorrido completo de la demo con los códigos fijos y arreglar lo que se vea roto.
   Hecho 24 nov: 123456/111111/222222 entran en su pantalla; foto con pistas → aprobación → carta en la ventana; tablet, aprobar y enviar se ven bien y sin errores de consola. Nada roto.
-- [ ] Que la caché del service worker cambie de versión sola cuando cambian los archivos (que nadie vea una versión vieja el día de la demo).
+- [x] Que la caché del service worker cambie de versión sola cuando cambian los archivos (que nadie vea una versión vieja el día de la demo).
+  Hecho 24 nov: el servidor calcula una huella de todos los archivos de `web/` al arrancar y la pone como versión de `sw.js`; con cualquier cambio, la tablet descarta la caché vieja. Con prueba.
 - [ ] Mensajes de error claros si el servidor no tiene voz (falta el modelo) o ffmpeg; que la tablet ofrezca texto y lugares sin quedarse esperando.
 - [ ] `scripts/comprobar.sh`: chequeo rápido antes de la demo (servidor responde, voz lista, certificado vale para la IP actual, códigos demo activos).
 

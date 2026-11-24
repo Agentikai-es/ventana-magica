@@ -19,11 +19,12 @@
 - **Todo pasa por el adulto de confianza**, en los dos sentidos.
 - **Cuatro reglas del hospital:** sin internet (caja con wifi propia, cartas programadas, la app abre sin conexión), desinfectable (botón de limpieza), sesiones cortas, sin datos reales.
 - **Ligera:** la web se sirve comprimida (≈48 KB en total) con caché y ETag; la voz es un solo ejecutable de 7,5 MB (antes 146 MB de código fuente); `npm run paquete` crea el paquete mínimo para la caja.
-- Pruebas: 61 de 61 en verde.
+- Pruebas: 63 de 63 en verde.
 
 ## Ciclo automático (hasta el 26 nov, 09:30)
 - Backlog en `BACKLOG.md`; una mejora por vuelta, solo se sube con las pruebas en verde.
 - 24 nov: recorrido de la demo con códigos fijos comprobado en tablet y móvil, sin fallos.
+- 24 nov: la caché de la tablet cambia de versión sola con cada cambio de la web.
 
 ## Falta
 - Instalar en una Raspberry Pi real (`bash scripts/instalar-raspberry.sh`) y probar su wifi propia.

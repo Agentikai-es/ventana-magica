@@ -627,6 +627,17 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
   // Archivos de la web: se leen una vez, se guardan comprimidos en memoria y se revalidan con ETag (304).
   // En una Raspberry Pi con wifi propia, esto reduce a un tercio lo que viaja y evita leer el disco en cada petición.
   const cacheWeb = new Map();
+  // Versión de la web = huella de todos sus archivos: el service worker cambia de caché solo cuando cambia algo.
+  const huellaWeb = createHash('sha1');
+  const recorrer = async (dir) => {
+    for (const f of (await readdir(dir, { withFileTypes: true })).sort((x, y) => x.name.localeCompare(y.name))) {
+      const ruta = join(dir, f.name);
+      if (f.isDirectory()) await recorrer(ruta);
+      else if (!f.name.endsWith('.test.mjs')) huellaWeb.update(f.name).update(await readFile(ruta));
+    }
+  };
+  await recorrer(WEB);
+  const versionWeb = `vm-${huellaWeb.digest('hex').slice(0, 10)}`;
   async function estatico(req, res, ruta) {
     const archivo = normalize(join(WEB, PAGINAS[ruta] || ruta));
     if (!archivo.startsWith(WEB + sep) || archivo.endsWith('.test.mjs')) throw new ErrorHttp(404, 'no_existe');
@@ -634,6 +645,7 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
     if (!f) {
       let datosArchivo;
       try { datosArchivo = await readFile(archivo); } catch { throw new ErrorHttp(404, 'no_existe'); }
+      if (archivo === join(WEB, 'sw.js')) datosArchivo = Buffer.from(datosArchivo.toString('utf8').replace(/const VERSION = '[^']*';/, `const VERSION = '${versionWeb}';`));
       const tipo = TIPOS[extname(archivo)] || 'application/octet-stream';
       const texto = /^(text|application\/(json|manifest))|svg/.test(tipo);
       f = { datos: datosArchivo, gz: texto && datosArchivo.length > 600 ? gzipSync(datosArchivo, { level: 9 }) : null, tipo,

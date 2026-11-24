@@ -482,3 +482,11 @@ test('modo demo: códigos fijos que no caducan, sirven en varios dispositivos y 
   otra.cerrar(); srv.close(); demo.cerrar();
   await rm(d2, { recursive: true, force: true });
 });
+
+test('la caché de la tablet cambia de versión sola cuando cambian los archivos de la web', async () => {
+  const sw = await (await fetch(`${base}/sw.js`)).text();
+  const v = sw.match(/const VERSION = '(vm-[0-9a-f]{10})';/);
+  assert.ok(v, 'el service worker lleva la huella de la web');
+  const otra = await (await fetch(`${base}/sw.js`)).text();
+  assert.ok(otra.includes(v[1]), 'misma web, misma versión');
+});
