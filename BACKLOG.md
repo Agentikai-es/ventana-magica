@@ -15,7 +15,8 @@ Reglas del ciclo automático:
   Hecho 24 nov: el servidor calcula una huella de todos los archivos de `web/` al arrancar y la pone como versión de `sw.js`; con cualquier cambio, la tablet descarta la caché vieja. Con prueba.
 - [x] Mensajes de error claros si el servidor no tiene voz (falta el modelo) o ffmpeg; que la tablet ofrezca texto y lugares sin quedarse esperando.
   Hecho 24 nov: el servidor detecta si falta ffmpeg (aviso al arrancar y error claro «sin_ffmpeg» al subir); sin voz, la tablet muestra «Sin voz» y propone escribir o tocar un lugar; la petición de voz corta a los 25 s y abre «Lugares».
-- [ ] `scripts/comprobar.sh`: chequeo rápido antes de la demo (servidor responde, voz lista, certificado vale para la IP actual, códigos demo activos).
+- [x] `scripts/comprobar.sh`: chequeo rápido antes de la demo (servidor responde, voz lista, certificado vale para la IP actual, códigos demo activos).
+  Hecho 24 nov: `npm run comprobar` revisa servidor, ffmpeg, whisper, modelo, certificado (IP actual y caducidad), HTTPS y los 4 códigos fijos; hoy sale «Todo listo para la demo».
 
 ## Prioridad 2 · calidad que se nota
 - [ ] Accesibilidad: repasar foco y anuncios en el juego (puzle → acertijo → descubierta) y en el chat con teclado.
