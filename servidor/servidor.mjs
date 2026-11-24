@@ -94,7 +94,7 @@ function ipsLocales() {
 const limpiarTexto = (t, max) => String(t ?? '').replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
 
 // ---------- Aplicación ----------
-export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, registrar = console.log, urlsWifi = [], demo = process.env.VP_DEMO === '1' } = {}) {
+export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, registrar = console.log, urlsWifi = [], demo = process.env.VP_DEMO === '1', proxy = process.env.VP_PROXY === '1', reinicioHoras = Number(process.env.VP_REINICIO_HORAS) || 0 } = {}) {
   const FOTOS = join(datos, 'fotos');
   await mkdir(FOTOS, { recursive: true, mode: 0o700 });
   const repo = abrirDB(join(datos, 'ventana.db'));
@@ -106,7 +106,8 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
   let claveNueva = null;
   // Modo demo: clave del panel fija («123456») y espacio de Leo con códigos fijos. Nunca con niños reales.
   const infoDemo = demo ? repo.asegurarDemo() : null;
-  if (demo && !claveAdmin) claveAdmin = '123456';
+  // En una demo pública (Render) la clave del panel viene de VP_CLAVE_PANEL, nunca la fácil.
+  if (demo && !claveAdmin) claveAdmin = process.env.VP_CLAVE_PANEL || '123456';
   if (claveAdmin) hashAdmin = hash(claveAdmin);
   else if (existsSync(rutaAdmin)) hashAdmin = JSON.parse(readFileSync(rutaAdmin, 'utf8')).hash;
   else {
@@ -163,6 +164,15 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
     ultimaRevision = ahora;
   }, 30_000);
   entregas.unref();
+  // Demo pública: cada N horas se borran fotos y mensajes y se restauran los códigos (nadie deja nada colgado).
+  let reinicio = null;
+  if (demo && reinicioHoras > 0) {
+    reinicio = setInterval(async () => {
+      await borrarArchivos(repo.borrarAportes(infoDemo.espacioId, 'reinicio-demo'));
+      repo.asegurarDemo();
+    }, reinicioHoras * HORA);
+    reinicio.unref();
+  }
   const limpieza = setInterval(() => limpiezaCompleta().catch(() => {}), HORA);
   limpieza.unref();
 
@@ -178,8 +188,12 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
     return a;
   }
 
+  // Detrás de un proxy (Render) la conexión real es HTTPS y la IP real va en x-forwarded-for.
+  const esHttps = (req) => req.socket.encrypted || (proxy && req.headers['x-forwarded-proto'] === 'https');
+  const ipDe = (req) => (proxy && String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()) || req.socket.remoteAddress;
+
   function ponerCookie(res, req, nombre, valor, segundos = 30 * 86400) {
-    const segura = req.socket.encrypted ? '; Secure' : '';
+    const segura = esHttps(req) ? '; Secure' : '';
     res.setHeader('Set-Cookie', `${nombre}=${valor}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${segundos}${segura}`);
   }
 
@@ -271,7 +285,7 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
     if (m !== 'GET' && req.headers['x-vp'] !== '1') throw new ErrorHttp(403, 'csrf');
 
     if (ruta === '/api/canjear' && m === 'POST') {
-      limitar(`codigo:${req.socket.remoteAddress}`);
+      limitar(`codigo:${ipDe(req)}`);
       limitar('codigo:global', 60); // detrás de un proxy todos comparten IP: tope global contra fuerza bruta
       const { codigo } = await leerJSON(req);
       const r = repo.canjearCodigo(String(codigo ?? '').replace(/\D/g, ''));
@@ -508,7 +522,7 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
 
     // ----- Panel del hospital -----
     if (ruta === '/api/panel/entrar' && m === 'POST') {
-      limitar(`panel:${req.socket.remoteAddress}`, 5);
+      limitar(`panel:${ipDe(req)}`, 5);
       const { clave } = await leerJSON(req);
       const x = Buffer.from(hash(String(clave ?? ''))); const y = Buffer.from(hashAdmin);
       if (!(x.length === y.length && timingSafeEqual(x, y))) throw new ErrorHttp(401, 'clave');
@@ -696,11 +710,19 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
     }
   }
 
-  return { manejar, repo, claveNueva, infoDemo, cerrar: () => { clearInterval(limpieza); clearInterval(entregas); repo.db.close(); } };
+  return { manejar, repo, claveNueva, infoDemo, cerrar: () => { clearInterval(limpieza); clearInterval(entregas); clearInterval(reinicio); repo.db.close(); } };
 }
 
 // ---------- Arranque ----------
 if (process.argv[1] && fileURLToPath(import.meta.url) === normalize(process.argv[1])) {
+  // En la nube (Render): un solo servidor HTTP en el puerto que dan; el HTTPS lo pone Render.
+  if (process.env.PORT) {
+    const app = await crearApp({ proxy: true, urlsWifi: process.env.RENDER_EXTERNAL_URL ? [process.env.RENDER_EXTERNAL_URL] : [] });
+    crearHttp(app.manejar).listen(Number(process.env.PORT), '0.0.0.0', () => {
+      console.log(`Ventana Mágica · demo en la nube en el puerto ${process.env.PORT} · voz: ${vozDisponible() ? 'sí' : 'no (texto y lugares)'} · ffmpeg: ${ffmpegDisponible() ? 'sí' : 'NO'}`);
+      if (app.infoDemo) console.log(`  Modo demo · códigos: ${app.infoDemo.codigos.map((c) => c.codigo).join(', ')}`);
+    });
+  } else {
   const PUERTO = Number(process.env.VP_PUERTO) || 8443;
   const PUERTO_LOCAL = Number(process.env.VP_PUERTO_LOCAL) || 8080;
   const cert = join(RAIZ, 'certs', 'cert.pem');
@@ -724,4 +746,5 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === normalize(process.argv
     console.log('');
   }
   if (app.claveNueva && !app.infoDemo) console.log(`\n  Clave del panel del hospital (guárdala, solo se muestra una vez): ${app.claveNueva}\n  Panel: http://localhost:${PUERTO_LOCAL}/panel\n`);
+  }
 }

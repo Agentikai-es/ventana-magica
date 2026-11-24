@@ -490,3 +490,22 @@ test('la caché de la tablet cambia de versión sola cuando cambian los archivos
   const otra = await (await fetch(`${base}/sw.js`)).text();
   assert.ok(otra.includes(v[1]), 'misma web, misma versión');
 });
+
+test('demo pública: la clave del panel viene de VP_CLAVE_PANEL, el reinicio borra lo subido y detrás del proxy la cookie es Secure', async () => {
+  const d3 = await mkdtemp(join(tmpdir(), 'vp-nube-'));
+  process.env.VP_CLAVE_PANEL = 'clave-larga-de-render';
+  const nube = await crearApp({ datos: d3, demo: true, proxy: true, registrar: () => {} });
+  delete process.env.VP_CLAVE_PANEL;
+  const srv = createServer(nube.manejar);
+  await new Promise((r) => srv.listen(0, '127.0.0.1', r));
+  const b = `http://127.0.0.1:${srv.address().port}`;
+  const entrar = (clave) => fetch(`${b}/api/panel/entrar`, { method: 'POST', headers: { 'x-vp': '1', 'content-type': 'application/json', 'x-forwarded-proto': 'https', 'x-forwarded-for': '203.0.113.7' }, body: JSON.stringify({ clave }) });
+  assert.equal((await entrar('123456')).status, 401, 'la clave fácil no vale en la nube');
+  const ok = await entrar('clave-larga-de-render');
+  assert.equal(ok.status, 200);
+  assert.match(ok.headers.get('set-cookie'), /Secure/);
+  const t = await fetch(`${b}/api/canjear`, { method: 'POST', headers: { 'x-vp': '1', 'content-type': 'application/json' }, body: JSON.stringify({ codigo: '123456' }) });
+  assert.equal(t.status, 200, 'el código de la tablet sigue siendo fácil');
+  srv.close(); nube.cerrar();
+  await rm(d3, { recursive: true, force: true });
+});
