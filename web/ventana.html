@@ -156,7 +156,7 @@
 
 <!-- Juego: puzle → acertijo → descubierta -->
 <dialog class="hoja" id="juego" aria-labelledby="juegoTitulo">
-  <div class="hoja-cab"><h2 id="juegoTitulo">Una carta para ti</h2><button class="cerrar-x" type="button" data-cerrar aria-label="Cerrar">×</button></div>
+  <div class="hoja-cab"><h2 id="juegoTitulo" tabindex="-1">Una carta para ti</h2><button class="cerrar-x" type="button" data-cerrar aria-label="Cerrar">×</button></div>
   <div class="hoja-cuerpo">
     <div class="pasos" aria-hidden="true"><span id="paso1"></span><span id="paso2"></span><span id="paso3"></span></div>
     <div id="juegoContenido"></div>
@@ -166,7 +166,7 @@
 <!-- Chat con una persona -->
 <dialog class="hoja" id="chat" aria-labelledby="chatTitulo">
   <div class="hoja-cab"><h2 id="chatTitulo">Mi gente</h2><button class="cerrar-x" type="button" data-cerrar aria-label="Cerrar">×</button></div>
-  <div class="hoja-cuerpo"><div class="burbujas" id="burbujas"></div></div>
+  <div class="hoja-cuerpo"><div class="burbujas" id="burbujas" role="log" aria-live="polite" aria-label="Conversación"></div></div>
   <form class="componer" id="componer" autocomplete="off">
     <div class="fila-c">
       <input id="chatTexto" maxlength="200" aria-label="Escribe un mensaje" placeholder="Escribe un mensaje…">

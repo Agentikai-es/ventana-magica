@@ -27,6 +27,7 @@
 - 24 nov: la caché de la tablet cambia de versión sola con cada cambio de la web.
 - 24 nov: avisos claros si falta la voz o ffmpeg; la voz nunca deja a la tablet esperando más de 25 s.
 - 24 nov: `npm run comprobar`, chequeo de 11 puntos antes de la demo (hoy: todo listo).
+- 24 nov: foco y anuncios accesibles en el juego y el chat.
 
 ## Falta
 - Instalar en una Raspberry Pi real (`bash scripts/instalar-raspberry.sh`) y probar su wifi propia.

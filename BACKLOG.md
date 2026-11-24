@@ -19,7 +19,8 @@ Reglas del ciclo automático:
   Hecho 24 nov: `npm run comprobar` revisa servidor, ffmpeg, whisper, modelo, certificado (IP actual y caducidad), HTTPS y los 4 códigos fijos; hoy sale «Todo listo para la demo».
 
 ## Prioridad 2 · calidad que se nota
-- [ ] Accesibilidad: repasar foco y anuncios en el juego (puzle → acertijo → descubierta) y en el chat con teclado.
+- [x] Accesibilidad: repasar foco y anuncios en el juego (puzle → acertijo → descubierta) y en el chat con teclado.
+  Hecho 24 nov: cada paso del juego lleva el foco a su título (comprobado en el navegador); las conversaciones son un registro que el lector anuncia; tras enviar, el foco vuelve a la caja de texto.
 - [ ] Pantalla de la familia: vista previa del vídeo con su duración y aviso si pasa de 20 s.
 - [ ] Panel: botón «Copiar códigos de la demo» y aviso visible cuando el servidor está en modo demo.
 - [ ] Pruebas para `web/puzle.js` (mezcla nunca resuelta) y `web/lib/escena.js` (capas de cielo y clima).

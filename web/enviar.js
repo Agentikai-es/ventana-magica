@@ -90,6 +90,7 @@ function abrirPuzleDelNino(m) {
   const caja = document.createElement('div');
   $('juegoContenido').replaceChildren(ayuda, caja);
   $('juego').showModal();
+  $('juegoTitulo').focus();
   crearPuzle(caja, `/medios/${m.id}`, {
     titulo: `Puzle de ${alias}`,
     alResolver: async () => {

@@ -47,7 +47,7 @@
 
   <section class="conversa" aria-labelledby="tituloChat">
     <h2 id="tituloChat">Con <span class="alias"></span></h2>
-    <div class="burbujas" id="burbujas"></div>
+    <div class="burbujas" id="burbujas" role="log" aria-live="polite" aria-label="Conversación con el niño"></div>
     <form class="componer" id="componer" autocomplete="off">
       <div class="fila-c">
         <input id="chatTexto" maxlength="200" aria-label="Escribe un mensaje" placeholder="Escribe un mensaje…">
@@ -97,7 +97,7 @@
 </main>
 
 <dialog class="hoja" id="juego" aria-labelledby="juegoTitulo">
-  <div class="hoja-cab"><h2 id="juegoTitulo">Puzle</h2><button class="cerrar-x" type="button" data-cerrar aria-label="Cerrar">×</button></div>
+  <div class="hoja-cab"><h2 id="juegoTitulo" tabindex="-1">Puzle</h2><button class="cerrar-x" type="button" data-cerrar aria-label="Cerrar">×</button></div>
   <div class="hoja-cuerpo" id="juegoContenido"></div>
 </dialog>
 

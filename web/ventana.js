@@ -239,7 +239,11 @@ function pintarBuzon() {
 }
 
 // =============== Juego: puzle → acertijo → descubierta ===============
-function pasos(n) { ['paso1', 'paso2', 'paso3'].forEach((id, i) => $(id).classList.toggle('hecho', i < n)); }
+function pasos(n) {
+  ['paso1', 'paso2', 'paso3'].forEach((id, i) => $(id).classList.toggle('hecho', i < n));
+  // Cada paso nuevo lleva el foco a su título: con teclado o lector se sabe dónde se está.
+  requestAnimationFrame(() => $('juegoTitulo').focus());
+}
 
 function abrirJuego(id) {
   const f = estado.fotos.find((x) => x.id === id);
@@ -450,6 +454,7 @@ async function enviarMensaje(peticion, ok) {
     efecto('envio');
     $('chatAviso').textContent = ok;
     await recargar();
+    $('chatTexto').focus(); // listo para escribir otro mensaje
   } catch (e) { $('chatAviso').textContent = e.message; }
 }
 
