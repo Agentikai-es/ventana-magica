@@ -93,6 +93,8 @@ async function cargar() {
 
 // Mensajes del chat en los dos sentidos: nada llega al niño ni sale de él sin pasar por aquí.
 function pintarMensajes(d) {
+  // Lo que el niño quiere mandar a otros niños de la planta va en la misma lista.
+  d = { ...d, mensajes: [...d.mensajes, ...(d.planta || []).map((m) => ({ ...m, de: 'nino', persona: `${m.para} (otro niño de la planta)`, planta: true }))].sort((x, y) => x.creado - y.creado) };
   $('tituloMensajes').textContent = d.mensajes.length ? `Mensajes esperando (${d.mensajes.length})` : 'Mensajes esperando';
   if (!d.mensajes.length) {
     $('mensajes').replaceChildren(Object.assign(document.createElement('p'), { className: 'aviso', textContent: 'No hay mensajes esperando.', style: 'margin:0' }));
@@ -110,7 +112,8 @@ function pintarMensajes(d) {
       pintarEscena(mp.querySelector('.escena'), componerEscena(m.escena));
       t.appendChild(mp);
     }
-    if ((m.tipo === 'foto' || m.tipo === 'puzle') && m.archivo) t.appendChild(Object.assign(document.createElement('img'), { src: `/medios/${m.id}`, alt: TIPO[m.tipo] }));
+    if ((m.tipo === 'foto' || m.tipo === 'puzle') && m.archivo) t.appendChild(Object.assign(document.createElement('img'), { src: `${m.planta ? '/planta' : '/medios'}/${m.id}`, alt: TIPO[m.tipo] }));
+    if (m.planta) t.appendChild(Object.assign(document.createElement('p'), { className: 'aviso', textContent: 'Entre niños solo se ven alias y avatar. Comprueba que no salen caras, nombres, pulseras ni datos del hospital.', style: 'margin:0' }));
     if ((m.tipo === 'audio' || m.tipo === 'postal') && m.archivo) t.appendChild(Object.assign(document.createElement('audio'), { src: `/medios/${m.id}`, controls: true }));
     const texto = m.tipo === 'puzle' ? `Mensaje secreto: «${m.secreto}»` : m.texto ? `«${m.texto}»` : '';
     if (texto) t.appendChild(Object.assign(document.createElement('p'), { className: 'txt', textContent: texto }));
@@ -120,8 +123,8 @@ function pintarMensajes(d) {
     const decide = async (decision) => {
       si.disabled = no.disabled = true;
       try {
-        await api('/api/aprobar/mensaje', { metodo: 'POST', cuerpo: { id: m.id, decision } });
-        $('hecho').textContent = decision === 'aprobar' ? `Enviado a ${m.de === 'nino' ? m.persona : d.alias}.` : 'Mensaje rechazado. No se enviará.';
+        await api(m.planta ? '/api/aprobar/planta' : '/api/aprobar/mensaje', { metodo: 'POST', cuerpo: { id: m.id, decision } });
+        $('hecho').textContent = decision === 'aprobar' ? `Enviado a ${m.de === 'nino' ? (m.para || m.persona) : d.alias}.` : 'Mensaje rechazado. No se enviará.';
       } catch (e) { $('hecho').textContent = e.message; }
       await cargar();
       (document.querySelector('#mensajes .aprobar') || $('tituloMensajes')).focus();

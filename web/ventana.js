@@ -1,4 +1,5 @@
-// Tablet del niño: Mi mundo (escenario a su gusto) · Buzón (puzle → acertijo → descubierta) · Mi gente (chat de ida y vuelta).
+// Tablet del niño: Mi mundo (escenario a su gusto) · Buzón (puzle → acertijo → descubierta) · Mi gente (chat de ida y vuelta)
+// · Amigos (otros niños de la planta: ánimos, visitas, postales y puzles entre ellos).
 import { AMBIENTES, AVATARES, PERSONAJES } from './lib/catalogo.js';
 import { interpretar, construirEscenario, ajustar } from './lib/escenario.js';
 import { componerEscena, pintarEscena } from './lib/escena.js';
@@ -15,6 +16,7 @@ let estado = null;      // lo que devuelve /api/ventana
 let actual = null;      // escenario en pantalla
 let avatar = null;
 let chatAbierto = null; // accesoId de la conversación abierta
+let amigoAbierto = null; // id del amigo de la planta con la conversación abierta
 const vistos = JSON.parse(localStorage.getItem('vp-vistos') || '{}'); // último mensaje visto por conversación (solo en esta tablet)
 
 // =============== Mi mundo ===============
@@ -169,7 +171,7 @@ $('limpiar').onclick = () => {
 };
 
 // =============== Pestañas ===============
-const PESTANAS = ['Buzon', 'Gente', 'Lugares'];
+const PESTANAS = ['Buzon', 'Gente', 'Amigos', 'Lugares'];
 function elegirPestana(nombre) {
   for (const p of PESTANAS) {
     const sel = p === nombre;
@@ -181,8 +183,9 @@ function elegirPestana(nombre) {
 for (const p of PESTANAS) {
   $(`tab${p}`).onclick = () => { efecto('toque'); elegirPestana(p); };
   $(`tab${p}`).onkeydown = (e) => {
-    const i = PESTANAS.indexOf(p) + (e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0);
-    if (i !== PESTANAS.indexOf(p) && PESTANAS[i]) { elegirPestana(PESTANAS[i]); $(`tab${PESTANAS[i]}`).focus(); }
+    const visibles = PESTANAS.filter((x) => !$(`tab${x}`).classList.contains('oculto'));
+    const i = visibles.indexOf(p) + (e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0);
+    if (i !== visibles.indexOf(p) && visibles[i]) { elegirPestana(visibles[i]); $(`tab${visibles[i]}`).focus(); }
   };
 }
 
@@ -429,6 +432,7 @@ function burbuja(m, nombre) {
 }
 
 function pintarBurbujas() {
+  if (amigoAbierto) return pintarBurbujasAmigo();
   const c = estado.chats.find((x) => x.accesoId === chatAbierto);
   if (!c) return;
   $('chatTitulo').textContent = c.nombre;
@@ -439,14 +443,19 @@ function pintarBurbujas() {
   requestAnimationFrame(() => { $('burbujas').lastElementChild?.scrollIntoView({ block: 'end' }); });
 }
 
+function modoChat(planta) {
+  for (const el of document.querySelectorAll('#chat .solo-planta')) el.classList.toggle('oculto', !planta);
+  for (const el of document.querySelectorAll('#chat .solo-gente')) el.classList.toggle('oculto', planta);
+}
+
 function abrirChat(accesoId) {
-  chatAbierto = accesoId;
+  chatAbierto = accesoId; amigoAbierto = null; modoChat(false);
   $('chatAviso').textContent = '';
   pintarBurbujas();
   if (!$('chat').open) $('chat').showModal();
   $('chatTexto').focus();
 }
-$('chat').addEventListener('close', () => { chatAbierto = null; pintarPersonas(); });
+$('chat').addEventListener('close', () => { chatAbierto = null; amigoAbierto = null; pintarPersonas(); pintarAmigos(); });
 
 async function enviarMensaje(peticion, ok) {
   try {
@@ -463,6 +472,7 @@ $('componer').onsubmit = (e) => {
   const texto = $('chatTexto').value.trim();
   if (!texto) return;
   $('chatTexto').value = '';
+  if (amigoAbierto) return enviarMensaje(() => api('/api/ventana/planta', { metodo: 'POST', cuerpo: { para: amigoAbierto, tipo: 'texto', texto } }), 'Enviado. Lo verá quien te cuida y enseguida le llegará.');
   enviarMensaje(() => api('/api/ventana/mensaje', { metodo: 'POST', cuerpo: { para: chatAbierto, texto } }), 'Enviado. Lo verá quien te cuida y enseguida le llegará.');
 };
 
@@ -486,7 +496,9 @@ $('chatPostal').onclick = async () => {
   if (!estado.escena) await guardarEscena();
   const texto = $('chatTexto').value.trim();
   $('chatTexto').value = '';
-  enviarMensaje(() => api('/api/ventana/mensaje', { metodo: 'POST', cuerpo: { para: chatAbierto, tipo: 'postal', texto } }),
+  enviarMensaje(() => (amigoAbierto
+    ? api('/api/ventana/planta', { metodo: 'POST', cuerpo: { para: amigoAbierto, tipo: 'postal', texto } })
+    : api('/api/ventana/mensaje', { metodo: 'POST', cuerpo: { para: chatAbierto, tipo: 'postal', texto } })),
     `Postal de tu ${actual.nombre} enviada. ¡Tendrá que adivinar dónde estás!${texto ? '' : ' Consejo: escribe antes un mensaje y se desbloqueará al acertar.'}`);
 };
 
@@ -504,10 +516,170 @@ $('chatFoto').onchange = async () => {
     c.getContext('2d').drawImage(mapa, 0, 0, c.width, c.height);
     const foto = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.85));
     $('chatTexto').value = '';
-    enviarMensaje(() => api('/api/ventana/mensaje', { metodo: 'POST', cuerpo: foto, tipo: 'image/jpeg', cabeceras: { 'x-para': chatAbierto, 'x-tipo': 'puzle', 'x-secreto': encodeURIComponent(secreto) } }),
+    enviarMensaje(() => (amigoAbierto
+      ? api('/api/ventana/planta', { metodo: 'POST', cuerpo: foto, tipo: 'image/jpeg', cabeceras: { 'x-para': amigoAbierto, 'x-secreto': encodeURIComponent(secreto) } })
+      : api('/api/ventana/mensaje', { metodo: 'POST', cuerpo: foto, tipo: 'image/jpeg', cabeceras: { 'x-para': chatAbierto, 'x-tipo': 'puzle', 'x-secreto': encodeURIComponent(secreto) } })),
       '¡Foto-puzle enviada! Tu mensaje secreto aparecerá cuando lo monten. Recuerda: mejor sin caras de otros niños.');
   } catch { $('chatAviso').textContent = 'No puedo abrir esa foto.'; }
 };
+
+// =============== Amigos de la planta ===============
+const amigoDe = (id) => (estado.planta || []).find((a) => a.id === id);
+const claveVisto = (id) => `p:${id}`;
+const sinLeerAmigo = (a) => a.mensajes.filter((m) => !m.mio && m.creado > (vistos[claveVisto(a.id)] || 0)).length;
+
+function miniPostal(esc) {
+  const mp = document.createElement('div'); mp.className = 'mini-postal';
+  mp.innerHTML = '<div class="marco"><div class="vista"><div class="escena"></div></div></div>';
+  if (esc) pintarEscena(mp.querySelector('.escena'), componerEscena(esc));
+  return mp;
+}
+// La ventana de un amigo, tal y como la tiene hoy (con su avatar).
+const mundoDe = (a) => (a.ambiente ? construirEscenario(a.ambiente, { avatar: a.avatar }) : null);
+
+function pintarAmigos() {
+  const lista = estado?.planta || [];
+  $('tabAmigos').classList.toggle('oculto', !estado?.comunidad);
+  const total = lista.reduce((n, a) => n + sinLeerAmigo(a), 0);
+  $('globoAmigos').textContent = total;
+  $('globoAmigos').classList.toggle('oculto', !total);
+  if (!lista.length) {
+    $('amigos').replaceChildren(Object.assign(document.createElement('p'), { className: 'aviso', textContent: 'Todavía no hay más niños en tu planta. Cuando lleguen, aparecerán aquí.' }));
+    return;
+  }
+  $('amigos').replaceChildren(...lista.map((a) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'amigo';
+    const mp = miniPostal(mundoDe(a)); mp.setAttribute('aria-hidden', 'true');
+    const q = document.createElement('span'); q.className = 'quien-es';
+    const em = document.createElement('span'); em.className = 'emoji-avatar'; em.textContent = AVATARES[a.avatar]?.emoji || '🙂'; em.setAttribute('aria-hidden', 'true');
+    const t = document.createElement('span');
+    const n = document.createElement('b'); n.textContent = a.alias;
+    const d = document.createElement('small'); d.textContent = a.lugar ? `Hoy está en ${a.lugar}` : 'Aún no ha elegido mundo';
+    t.append(n, d); q.append(em, t);
+    b.append(mp, q);
+    if (sinLeerAmigo(a)) { const p = document.createElement('span'); p.className = 'punto'; p.setAttribute('aria-label', 'Mensajes nuevos'); b.appendChild(p); }
+    b.onclick = () => { efecto('toque'); abrirAmigo(a.id); };
+    return b;
+  }));
+}
+
+function abrirAmigo(id) {
+  amigoAbierto = id; chatAbierto = null; modoChat(true);
+  const a = amigoDe(id);
+  $('chatAviso').textContent = '';
+  $('animos').replaceChildren(...(estado.animos || []).map((t) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = t;
+    b.onclick = () => enviarMensaje(() => api('/api/ventana/planta', { metodo: 'POST', cuerpo: { para: amigoAbierto, tipo: 'animo', texto: t } }), `¡Ánimo enviado a ${a.alias}!`);
+    return b;
+  }));
+  $('irVisitaTexto').textContent = a.lugar ? `Ir a ${a.lugar}` : 'Ir a su mundo';
+  $('irVisita').disabled = !a.ambiente;
+  pintarBurbujas();
+  if (!$('chat').open) $('chat').showModal();
+  $('chatTexto').focus();
+}
+
+async function irDeVisita(id) {
+  const a = amigoDe(id);
+  try {
+    const esc = await api(`/api/ventana/visitar/${id}`, { metodo: 'POST' });
+    efecto('magia');
+    if ($('chat').open) $('chat').close();
+    await aplicar(esc, { guardar: false });
+    if (estado) estado.escena = esc;
+    aviso(`🚀 ¡Estás de visita con ${a?.alias || 'tu amigo'} en ${esc.nombre}!`);
+  } catch (e) { $('chatAviso').textContent = e.message; }
+}
+$('irVisita').onclick = () => irDeVisita(amigoAbierto);
+$('invitar').onclick = async () => {
+  if (!actual) return;
+  if (!estado.escena) await guardarEscena();
+  const a = amigoDe(amigoAbierto);
+  enviarMensaje(() => api('/api/ventana/planta', { metodo: 'POST', cuerpo: { para: amigoAbierto, tipo: 'visita' } }), `Invitación enviada: ${a.alias} puede venir a tu ${actual.nombre}.`);
+};
+
+function burbujaAmigo(m, a) {
+  const d = document.createElement('div');
+  d.className = `burbuja ${m.mio ? 'mia' : 'suya'}${m.estado === 'pendiente' ? ' espera' : ''}`;
+  const texto = (t) => { if (t) d.appendChild(Object.assign(document.createElement('div'), { textContent: t })); };
+  const boton = (t, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'boton-oscuro'; b.textContent = t; b.onclick = fn; d.appendChild(b); };
+  if (m.tipo === 'postal' && !m.mio && m.opciones) {
+    // Postal-acertijo de otro niño: primero adivinar dónde está hoy.
+    texto(`📮 ¿Dónde está ${a.alias} hoy?`);
+    const muestra = document.createElement('div');
+    muestra.style.cssText = `height:46px;border-radius:12px;margin:.4rem 0;background:linear-gradient(90deg,${m.pistas.paleta.join(',')})`;
+    muestra.setAttribute('aria-hidden', 'true');
+    d.appendChild(muestra);
+    const rej = document.createElement('div'); rej.className = 'opciones';
+    for (const o of m.opciones) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'opcion'; b.textContent = o;
+      b.onclick = async () => {
+        try {
+          const r = await api(`/api/ventana/planta/${m.id}/postal`, { metodo: 'POST', cuerpo: { donde: o } });
+          b.classList.add(r.acierto ? 'bien' : 'mal');
+          efecto(r.acierto ? 'acierto' : 'toque');
+          $('chatAviso').textContent = r.acierto ? '¡Has acertado!' : r.mensaje.opciones ? 'Casi… ¡prueba otra vez!' : `Estaba en ${r.mensaje.escena.nombre}.`;
+          if (r.acierto || !r.mensaje.opciones) setTimeout(recargar, 700);
+        } catch (e) { $('chatAviso').textContent = e.message; }
+      };
+      rej.appendChild(b);
+    }
+    d.appendChild(rej);
+  } else if (m.tipo === 'puzle' && !m.mio && m.secreto === undefined) {
+    texto(`🧩 ${a.alias} te ha mandado una foto-puzle con un mensaje secreto.`);
+    boton('Montar el puzle', () => montarPuzleAmigo(m, a));
+  } else {
+    if (m.escena) d.appendChild(miniPostal(m.escena));
+    if (m.tipo === 'puzle' && m.archivo) d.appendChild(img(`/planta/${m.id}`, 'Foto-puzle'));
+    texto(m.tipo === 'puzle' ? `Mensaje secreto: «${m.secreto}»` : m.texto);
+    if (m.tipo === 'visita' && !m.mio) boton(`¡Voy a ${m.escena?.nombre || 'su mundo'}!`, () => irDeVisita(a.id));
+  }
+  const meta = document.createElement('div'); meta.className = 'meta';
+  const extra = m.estado === 'pendiente' ? 'esperando a que lo vea quien te cuida'
+    : m.estado === 'rechazado' ? 'no se ha enviado'
+    : m.mio && m.tipo === 'postal' ? (m.juego === 'resuelto' ? `¡${a.alias} ha adivinado dónde estabas!` : `${a.alias} tiene que adivinar dónde estás`)
+    : m.mio && m.tipo === 'puzle' ? (m.juego === 'resuelto' ? `¡${a.alias} ya lo ha resuelto!` : `${a.alias} aún lo está montando`) : '';
+  meta.textContent = [haceCuanto(m.creado), extra].filter(Boolean).join(' · ');
+  d.appendChild(meta);
+  return d;
+}
+
+function pintarBurbujasAmigo() {
+  const a = amigoDe(amigoAbierto);
+  if (!a) return;
+  $('chatTitulo').textContent = `${AVATARES[a.avatar]?.emoji || ''} ${a.alias}`;
+  $('burbujas').replaceChildren(...(a.mensajes.length ? a.mensajes.map((m) => burbujaAmigo(m, a))
+    : [Object.assign(document.createElement('p'), { className: 'aviso', textContent: `Mándale un ánimo a ${a.alias}, invítale a tu mundo o vete de visita al suyo.`, style: 'color:#4a4c66' })]));
+  const u = a.mensajes[a.mensajes.length - 1];
+  if (u) { vistos[claveVisto(a.id)] = Math.max(vistos[claveVisto(a.id)] || 0, u.creado); localStorage.setItem('vp-vistos', JSON.stringify(vistos)); }
+  requestAnimationFrame(() => { $('burbujas').lastElementChild?.scrollIntoView({ block: 'end' }); });
+}
+
+function montarPuzleAmigo(m, a) {
+  if (!$('juego').open) $('juego').showModal();
+  pasos(1);
+  $('juegoTitulo').textContent = `El puzle de ${a.alias}`;
+  const caja = document.createElement('div');
+  $('juegoContenido').replaceChildren(caja);
+  crearPuzle(caja, `/planta/${m.id}`, {
+    lado: estado.lado || 3,
+    titulo: `Puzle de ${a.alias}`,
+    alResolver: async () => {
+      const r = await api(`/api/ventana/planta/${m.id}/puzle`, { metodo: 'POST' });
+      pasos(3);
+      efecto('acierto');
+      $('juegoTitulo').textContent = '¡Puzle resuelto!';
+      const rev = document.createElement('div'); rev.className = 'revelado';
+      rev.append(img(`/planta/${m.id}`, `Foto de ${a.alias}`));
+      const sec = document.createElement('p'); sec.className = 'quien'; sec.textContent = `«${r.mensaje.secreto}»`;
+      const volver = document.createElement('button'); volver.type = 'button'; volver.className = 'boton-oscuro'; volver.textContent = `Contestar a ${a.alias}`;
+      volver.onclick = () => { $('juego').close(); abrirAmigo(a.id); };
+      $('juegoContenido').replaceChildren(rev, sec, volver);
+      await recargar();
+    },
+  });
+}
 
 // =============== Avisos en tiempo real ===============
 function aviso(texto) {
@@ -522,7 +694,8 @@ async function recargar() {
   estado = await api('/api/ventana');
   pintarBuzon();
   pintarPersonas();
-  if (chatAbierto) pintarBurbujas();
+  pintarAmigos();
+  if (chatAbierto || amigoAbierto) pintarBurbujas();
 }
 
 async function iniciar() {
@@ -546,6 +719,7 @@ async function iniciar() {
   }
   pintarBuzon();
   pintarPersonas();
+  pintarAmigos();
 
   const nombre = (id) => estado.chats.find((c) => c.accesoId === id)?.nombre || 'Alguien';
   const fuente = escuchar('ventana', {
@@ -553,6 +727,13 @@ async function iniciar() {
     mensaje: async (d) => { await recargar(); efecto('llega'); aviso(`💬 ¡${nombre(d.accesoId)} te ha escrito!`); },
     puzle_resuelto: async (d) => { await recargar(); efecto('acierto'); aviso(`🧩 ¡${d.nombre} ha montado tu foto-puzle y ha leído tu secreto!`); },
     postal_resuelta: async (d) => { await recargar(); efecto('acierto'); aviso(d.acierto ? `🎉 ¡${d.nombre} ha adivinado dónde estás!` : `💌 ${d.nombre} ya ha abierto tu postal.`); },
+    planta: async (d) => {
+      await recargar();
+      efecto(d.resuelto ? 'acierto' : 'llega');
+      aviso(d.visita ? `🚀 ¡${d.de} ha venido de visita a tu mundo!`
+        : d.resuelto ? `🎉 ¡${d.de} ha resuelto tu ${d.resuelto === 'postal' ? 'postal-acertijo' : 'foto-puzle'}!`
+        : `🏥 ¡${d.de} te ha mandado algo! Míralo en «Amigos».`);
+    },
     actualizar: () => recargar(),
   });
   fuente.onopen = () => { $('conexion').textContent = 'Conectada'; $('conexion').className = 'aviso ok'; };
@@ -567,8 +748,8 @@ async function sinConexion(e) {
   avatar = g?.avatar || 'zorrito';
   pintarAvatares(); pintarSonido();
   if (!actual) await aplicar(construirEscenario(g?.ambiente || 'playa', { avatar, personajes: g?.personajes || [], momento: g?.momento, clima: g?.clima }), { guardar: false });
-  estado = { fotos: [], chats: [], puzle: { total: 9, hechas: 0, mensaje: null }, emojis: [], lado: 3 };
-  pintarBuzon(); pintarPersonas();
+  estado = { fotos: [], chats: [], planta: [], comunidad: false, puzle: { total: 9, hechas: 0, mensaje: null }, emojis: [], lado: 3 };
+  pintarBuzon(); pintarPersonas(); pintarAmigos();
   setTimeout(() => location.reload(), 60_000); // vuelve a intentarlo cada minuto
 }
 

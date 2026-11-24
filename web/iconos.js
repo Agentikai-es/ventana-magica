@@ -17,6 +17,7 @@ export const ICONOS = {
   charla: T('<path d="M4 5.5h16v10H10l-4.5 3.5V15.5H4z"/><path d="M8 9.5h8M8 12.5h5"/>'),
   mapa: T('<path d="M3.5 6l5-2 7 2.5 5-2v13.5l-5 2-7-2.5-5 2z"/><path d="M8.5 4v13.5M15.5 6.5V20"/>'),
   gota: T('<path d="M12 3.5c3.5 4.4 6 7.8 6 10.8a6 6 0 0 1-12 0c0-3 2.5-6.4 6-10.8z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/>'),
+  amigos: T('<circle cx="8.5" cy="8.5" r="3.2"/><circle cx="16" cy="9.5" r="2.7"/><path d="M2.5 19.5a6 6 0 0 1 12 0M14 14.2a5 5 0 0 1 7.5 4.3"/>'),
   persona: T('<circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>'),
 };
 
