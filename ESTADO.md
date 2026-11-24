@@ -3,7 +3,7 @@
 Última actualización: 24 nov 2026 (tarde-noche)
 
 ## Cómo comprobarlo (para OpenBot y el equipo)
-- Pruebas: `timeout 240 npm test` (64 pruebas). Las de `mvp/` son del prototipo antiguo y ya no reflejan la app.
+- Pruebas: `timeout 240 npm test` (72 pruebas). Las de `mvp/` son del prototipo antiguo y ya no reflejan la app.
 - Arrancar: `npm start` → `http://localhost:8080`. Panel: `/panel` con la clave de `datos/ACCESOS-DEMO.md` (no va a git).
 
 ## Demo en vivo
@@ -20,10 +20,12 @@
 - **Mi mundo:** voz y texto, lugares del mundo (París, Egipto, Polo Norte…), cielo (noche, lluvia, nieve, fiesta), sonido sintetizado, héroes originales («Iron Man» → Capitán Armadura Roja).
 - **Buzón:** cada foto o vídeo llega como puzle (2×2 o 3×3) + acertijo «¿quién te la envía y desde dónde?».
 - **Mi gente:** chat con texto, audio, postal-acertijo («¿Dónde está Leo hoy?») y foto-puzle con mensaje secreto.
+- **Amigos de la planta:** los niños de la misma caja se ven (alias, avatar y dónde está hoy cada uno), se mandan ánimos, postales-acertijo y foto-puzles, y se van de visita al mundo del otro. Demo: Sara (444444, su adulto 555555) y Nico.
+- **Mundo sin límites:** 30 lugares (Gran Muralla, Nueva York, Zaragoza, safari…) × hora × clima × personajes × avatar = miles de escenarios; botón «Ideas» si el niño no sabe qué pedir.
 - **Todo pasa por el adulto de confianza**, en los dos sentidos.
 - **Cuatro reglas del hospital:** sin internet (caja con wifi propia, cartas programadas, la app abre sin conexión), desinfectable (botón de limpieza), sesiones cortas, sin datos reales.
 - **Ligera:** la web se sirve comprimida (≈48 KB en total) con caché y ETag; la voz es un solo ejecutable de 7,5 MB (antes 146 MB de código fuente); `npm run paquete` crea el paquete mínimo para la caja.
-- Pruebas: 64 de 64 en verde.
+- Pruebas: 72 de 72 en verde.
 
 ## Ciclo automático (hasta el 26 nov, 09:30)
 - Backlog en `BACKLOG.md`; una mejora por vuelta, solo se sube con las pruebas en verde.

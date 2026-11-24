@@ -1,7 +1,7 @@
 // Composición (v2): dibuja el escenario en capas (fondo, decorado, objetos, personajes, avatar).
 // Sin imágenes externas: degradado CSS, SVG propio y emojis del catálogo.
 
-import { PERSONAJES, OBJETOS, AVATARES } from './catalogo.js';
+import { AMBIENTES, PERSONAJES, OBJETOS, AVATARES } from './catalogo.js';
 
 // Decorado SVG por ambiente (viewBox 0 0 100 60). Formas simples y suaves.
 const B = 'fill="#ffffff"';
@@ -58,6 +58,18 @@ Object.assign(DECORADOS, {
     <path d="M0 54c16-2 34 2 50 0s34-2 50 0V60H0z" fill="#f4fbff"/>`,
 });
 
+// Campo de colinas: base de la granja, Japón, el circo y el país de las golosinas.
+DECORADOS.campo = `<circle cx="80" cy="14" r="7" fill="#fff59d" opacity=".85"/>
+    <ellipse cx="24" cy="15" rx="10" ry="3" ${B} opacity=".55"/><ellipse cx="44" cy="22" rx="7" ry="2" ${B} opacity=".4"/>
+    <path d="M0 60V44c14-8 30-8 46-2s30 4 54-4V60z" fill="#7cb342" opacity=".7"/>
+    <path d="M0 60V50c20-5 40 2 60-1s28-4 40 0V60z" fill="#558b2f" opacity=".9"/>`;
+
+// Llanura cálida sin monumentos: base de la sabana, Australia y la India (el monumento lo pone cada lugar).
+DECORADOS.llanura = `<circle cx="82" cy="13" r="7" fill="#fff3c4" opacity=".9"/>
+    <path d="M0 50c14-5 30 1 46-1s30-5 54 0V60H0z" fill="#e9b763" opacity=".85"/>
+    <path d="M0 55c20-3 40 2 60 0s30-3 40 0V60H0z" fill="#d9a24f"/>
+    <g fill="#6d8b3a" opacity=".75"><path d="M14 50h1.2v-7h-1.2z"/><ellipse cx="14.6" cy="42.5" rx="6" ry="1.8"/></g>`;
+
 // Cielo según la hora: una veladura encima del fondo.
 export const CIELOS = {
   dia: '',
@@ -98,7 +110,7 @@ export function componerEscena(escenario) {
     capas: [
       { capa: 'fondo', css: `linear-gradient(180deg, ${c1}, ${c2})` },
       { capa: 'cielo', css: CIELOS[escenario.momento] || '', momento: escenario.momento || 'dia' },
-      { capa: 'decorado', svg: DECORADOS[escenario.ambiente] || '' },
+      { capa: 'decorado', svg: DECORADOS[escenario.ambiente] || DECORADOS[AMBIENTES[escenario.ambiente]?.base] || '', monumento: AMBIENTES[escenario.ambiente]?.monumento || null },
       { capa: 'objetos', items: objetos },
       { capa: 'personajes', items: personajes },
       { capa: 'avatar', item: { id: escenario.avatar, emoji: av.emoji, etiqueta: `Tú · ${av.nombre}`, x: 50, y: 80 } },
@@ -160,7 +172,14 @@ export function pintarEscena(contenedor, escena) {
       }
     }
     // El SVG sale solo de DECORADOS (código propio), nunca de texto del usuario.
-    if (c.capa === 'decorado') capa.innerHTML = `<svg viewBox="0 0 100 60" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${c.svg}</svg>`;
+    if (c.capa === 'decorado') {
+      capa.innerHTML = `<svg viewBox="0 0 100 60" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${c.svg}</svg>`;
+      if (c.monumento) {
+        const m = doc.createElement('span');
+        m.className = 'monumento'; m.textContent = c.monumento; m.setAttribute('aria-hidden', 'true');
+        capa.appendChild(m);
+      }
+    }
     if (c.capa === 'objetos') c.items.forEach((it, i) => capa.appendChild(elemento(doc, 'objeto', it, i * 0.15)));
     if (c.capa === 'personajes') c.items.forEach((it, i) => capa.appendChild(elemento(doc, 'personaje', it, 0.3 + i * 0.2)));
     if (c.capa === 'avatar') capa.appendChild(elemento(doc, 'avatar', c.item, 0.9));

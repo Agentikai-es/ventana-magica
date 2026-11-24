@@ -25,6 +25,7 @@ const ENTRADA_ALTERNATIVAS = {
   vacio: 'Dime adónde quieres ir hoy.',
   contenido: 'Vamos a buscar una aventura tranquila y bonita.',
   fuera_catalogo: 'Esa aventura todavía no cabe en la ventana, pero tengo otras preparadas.',
+  no_se: '¿No sabes adónde ir? Te propongo unas ideas.',
 };
 
 function cielo(e) {

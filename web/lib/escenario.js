@@ -88,6 +88,34 @@ export function alternativasSeguras(frase = '', { avatar } = {}) {
   return [0, 1, 2].map((i) => construirEscenario(ALTERNATIVAS_SEGURAS[(inicio + i) % n], { avatar }));
 }
 
+// «No sé», «sorpréndeme»…: el niño no sabe qué pedir y la ventana le propone ideas.
+const NO_SE = ['no se', 'no lo se', 'ni idea', 'sorprendeme', 'sorpresa', 'lo que sea', 'lo que quieras', 'elige tu', 'decide tu', 'cualquiera', 'que me recomiendas', 'ideas', 'ayudame'];
+export const esNoSe = (frase) => { const f = ` ${normalizar(frase)} `; return NO_SE.some((x) => f.includes(` ${x} `)); };
+
+// Momento del día real: de noche la ventana propone cielos de noche.
+const momentoDe = (hora) => (hora >= 21 || hora < 7 ? 'noche' : hora >= 18 ? 'atardecer' : 'dia');
+const CLIMA_SUGERIDO = { polo: 'nieve', montana: 'nieve', islandia: 'nieve', canada: 'hojas', golosinas: 'confeti', circo: 'confeti', mar: 'burbujas', hawai: 'despejado' };
+
+// Sugerencias para cuando el niño no sabe qué pedir. Primero, ir con un amigo de la planta; después, lugares
+// que aún no ha visitado, con el cielo de la hora real. Siempre 3 y sin repetir. Deterministas con la misma semilla.
+export function sugerir({ avatar, amigos = [], visitados = [], hora = 12, semilla = 0 } = {}) {
+  const momento = momentoDe(hora);
+  const out = [];
+  const amigo = amigos.filter((a) => a.ambiente && Object.hasOwn(AMBIENTES, a.ambiente))[semilla % Math.max(1, amigos.length)] || amigos.find((a) => a.ambiente);
+  if (amigo) out.push({ ...construirEscenario(amigo.ambiente, { avatar, momento }), conAmigo: { id: amigo.id, alias: amigo.alias } });
+  const ids = Object.keys(AMBIENTES).filter((id) => !out.some((e) => e.ambiente === id));
+  const nuevos = ids.filter((id) => !visitados.includes(id));
+  const lista = (nuevos.length >= 3 ? nuevos : ids);
+  const inicio = hash(`${semilla}`) % lista.length;
+  for (let i = 0; out.length < 3 && i < lista.length; i++) {
+    const id = lista[(inicio + i * 7) % lista.length];
+    if (out.some((e) => e.ambiente === id)) continue;
+    const clima = momento === 'noche' && !CLIMA_SUGERIDO[id] ? 'estrellas' : CLIMA_SUGERIDO[id] || 'despejado';
+    out.push(construirEscenario(id, { avatar, momento, clima }));
+  }
+  return out;
+}
+
 // Aplica un ajuste de cielo a un escenario existente.
 export function ajustar(escenario, { momento, clima } = {}) {
   if (!escenario || escenario.tipo !== 'escenario') return escenario;
@@ -113,6 +141,7 @@ export function interpretar(frase, { avatar } = {}) {
   try {
     const n = normalizar(frase);
     if (!n) return respuestaAlternativas('vacio', '', avatar);
+    if (esNoSe(n)) return { tipo: 'alternativas', motivo: 'no_se', ambiente: null, rolNino: 'protagonista', avatar: avatarValido(avatar, 'zorrito'), alternativas: sugerir({ avatar, semilla: hash(n) }) };
 
     const palabras = n.split(' ');
     if (palabras.some((p) => NO_PERMITIDO.includes(p))) {

@@ -1,7 +1,7 @@
 // Tablet del niño: Mi mundo (escenario a su gusto) · Buzón (puzle → acertijo → descubierta) · Mi gente (chat de ida y vuelta)
 // · Amigos (otros niños de la planta: ánimos, visitas, postales y puzles entre ellos).
 import { AMBIENTES, AVATARES, PERSONAJES } from './lib/catalogo.js';
-import { interpretar, construirEscenario, ajustar } from './lib/escenario.js';
+import { interpretar, construirEscenario, ajustar, sugerir } from './lib/escenario.js';
 import { componerEscena, pintarEscena } from './lib/escena.js';
 import { narrar } from './lib/narracion.js';
 import { $, api, escuchar, haceCuanto } from './comun.js';
@@ -29,6 +29,9 @@ async function aplicar(esc, { guardar = true } = {}) {
   for (const b of $('lugares').children) b.setAttribute('aria-pressed', String(b.dataset.id === esc.ambiente));
   paisaje(AMBIENTES[esc.ambiente].sonido, esc.clima);
   // Copia local del escenario (solo catálogo, nada personal) para abrir igual sin conexión.
+  // Lugares ya visitados (solo en esta tablet): las ideas proponen sitios nuevos.
+  const visitados = JSON.parse(localStorage.getItem('vp-visitados') || '[]');
+  if (!visitados.includes(esc.ambiente)) localStorage.setItem('vp-visitados', JSON.stringify([...visitados, esc.ambiente].slice(-40)));
   localStorage.setItem('vp-escena', JSON.stringify({ ambiente: esc.ambiente, personajes: esc.personajes, avatar: esc.avatar, momento: esc.momento, clima: esc.clima }));
   if (guardar) await guardarEscena();
 }
@@ -48,14 +51,31 @@ function mostrarAlternativas(r) {
   $('alternativas').replaceChildren(...r.alternativas.map((alt) => {
     const b = document.createElement('button');
     b.type = 'button';
-    b.textContent = `${PERSONAJES[alt.personajes[0]].emoji} ${alt.nombre}`;
-    b.onclick = () => { efecto('magia'); aplicar(construirEscenario(alt.ambiente, { avatar })); };
+    const icono = AMBIENTES[alt.ambiente].monumento || PERSONAJES[alt.personajes[0]].emoji;
+    b.textContent = alt.conAmigo ? `${icono} Con ${alt.conAmigo.alias} en ${alt.nombre}` : `${icono} ${alt.nombre}`;
+    b.onclick = () => {
+      if (alt.conAmigo) return irDeVisita(alt.conAmigo.id);
+      efecto('magia'); aplicar(construirEscenario(alt.ambiente, { avatar, momento: alt.momento, clima: alt.clima }));
+    };
     return b;
   }));
 }
 
+// Ideas para cuando el niño no sabe qué pedir: un amigo de la planta, lugares nuevos y el cielo de la hora real.
+function mostrarIdeas() {
+  const ideas = sugerir({
+    avatar, amigos: estado?.planta || [], visitados: JSON.parse(localStorage.getItem('vp-visitados') || '[]'),
+    hora: new Date().getHours(), semilla: Math.floor(Date.now() / 1000),
+  });
+  mostrarAlternativas({ tipo: 'alternativas', motivo: 'no_se', alternativas: ideas });
+  efecto('toque');
+  return '¿Qué te parecen estas ideas?';
+}
+$('ideas').onclick = () => { $('estado').textContent = mostrarIdeas(); };
+
 function pedir(frase) {
   const r = interpretar(frase, { avatar });
+  if (r.tipo === 'alternativas' && r.motivo === 'no_se') return mostrarIdeas();
   if (r.tipo === 'escenario') { efecto('magia'); aplicar(r); return '¡Listo! Mira tu ventana.'; }
   if (r.tipo === 'ajuste' && actual) { efecto('magia'); aplicar(ajustar(actual, r)); return '¡Hecho! Mira el cielo.'; }
   mostrarAlternativas(r);

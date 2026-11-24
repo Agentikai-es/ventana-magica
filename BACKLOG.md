@@ -26,6 +26,11 @@ Reglas del ciclo automático:
 - [ ] Panel: botón «Copiar códigos de la demo» y aviso visible cuando el servidor está en modo demo.
 - [ ] Pruebas para `web/puzle.js` (mezcla nunca resuelta) y `web/lib/escena.js` (capas de cielo y clima).
 
+## Nuevo (24 nov) · comunidad y mundo sin límites
+- [x] Comunidad de la planta: pestaña «Amigos», ánimos, visitas, postales y puzles entre niños; el adulto aprueba; interruptor en el panel.
+- [x] Más de 30 lugares del mundo con monumento propio, sugerencias «Ideas» (amigos, sitios nuevos, cielo de la hora).
+- [ ] IA de texto local (llama.cpp + modelo pequeño) para entender frases libres y proponer escenarios. Necesita OK de Jamin para descargar el modelo.
+
 ## Prioridad 3 · ligereza y orden
 - [ ] Revisar tamaño de `web/` y quitar código muerto (rutas o estilos que ya no se usan, p. ej. `/api/ventana/postal` antigua si nada la usa).
 - [ ] README: sección corta «Demo en 5 minutos» con los códigos fijos y capturas en texto.

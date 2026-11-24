@@ -141,3 +141,30 @@ test('cielo dentro de la petición: «una playa con nieve de noche»', () => {
   assert.equal(r.clima, 'nieve');
   assert.equal(interpretar('fiesta en el castillo').clima, 'confeti');
 });
+
+test('«no sé» o «sorpréndeme»: tres sugerencias distintas, primero con un amigo de la planta y con el cielo de la hora', async () => {
+  const { sugerir, esNoSe } = await import('./escenario.js');
+  assert.ok(esNoSe('No sé qué pedir') && esNoSe('¡sorpréndeme!') && !esNoSe('una playa'));
+  const r = interpretar('no sé');
+  assert.equal(r.tipo, 'alternativas');
+  assert.equal(r.alternativas.length, 3);
+  const s = sugerir({ avatar: 'zorrito', amigos: [{ id: 'x', alias: 'Sara', ambiente: 'paris' }], visitados: ['playa'], hora: 22, semilla: 3 });
+  assert.equal(s.length, 3);
+  assert.equal(s[0].ambiente, 'paris');
+  assert.equal(s[0].conAmigo.alias, 'Sara');
+  assert.equal(new Set(s.map((e) => e.ambiente)).size, 3);
+  assert.ok(s.every((e) => e.momento === 'noche' && e.avatar === 'zorrito'));
+  assert.ok(!s.some((e) => e.ambiente === 'playa'), 'propone sitios nuevos para él');
+});
+
+test('mundo sin límites: más de 30 lugares y miles de combinaciones, todos válidos y con decorado', async () => {
+  const { MOMENTOS, CLIMAS, AVATARES } = await import('./catalogo.js');
+  const { componerEscena } = await import('./escena.js');
+  const lugares = Object.keys(AMBIENTES);
+  assert.ok(lugares.length >= 30);
+  assert.ok(lugares.length * Object.keys(MOMENTOS).length * Object.keys(CLIMAS).length * Object.keys(AVATARES).length > 5000);
+  for (const id of lugares) assert.ok(componerEscena(construirEscenario(id)).capas[2].svg.length > 0, `${id} tiene decorado`);
+  assert.equal(interpretar('llévame a la Gran Muralla China').ambiente, 'china');
+  assert.equal(interpretar('quiero ir a Zaragoza a ver el Ebro').ambiente, 'zaragoza');
+  assert.equal(interpretar('un panda').ambiente, 'china');
+});

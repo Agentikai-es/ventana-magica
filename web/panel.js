@@ -91,7 +91,11 @@ function tarjeta(e) {
   lado.value = String(e.lado || 3);
   lado.setAttribute('aria-label', `Dificultad del puzle de ${e.alias}`);
   lado.onchange = () => accion(() => api(`/api/panel/espacios/${e.id}/lado`, { metodo: 'POST', cuerpo: { lado: Number(lado.value) } }));
-  return el('article', { className: 'tarjeta espacio' }, cab, tabla, el('div', { className: 'nueva' }, etiqueta, rol, anadir, lado));
+  // Comunidad de la planta: solo con el consentimiento de los tutores. Los demás niños verán su alias, avatar y dónde está hoy.
+  const com = el('input', { type: 'checkbox', checked: !!e.comunidad });
+  com.onchange = () => accion(() => api(`/api/panel/espacios/${e.id}/comunidad`, { metodo: 'POST', cuerpo: { activa: com.checked } }));
+  const comunidad = el('label', { className: 'casilla' }, com, el('span', { textContent: 'Amigos de la planta (con consentimiento de los tutores)' }));
+  return el('article', { className: 'tarjeta espacio' }, cab, tabla, el('div', { className: 'nueva' }, etiqueta, rol, anadir, lado, comunidad));
 }
 
 async function cargar() {
