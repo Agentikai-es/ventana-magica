@@ -42,7 +42,16 @@ $('archivo').onchange = async () => {
       if (f.size > 40 * 1024 * 1024) throw new Error('El vídeo es demasiado grande. Prueba con uno más corto (hasta 20 segundos).');
       const v = Object.assign(document.createElement('video'), { src: URL.createObjectURL(f), controls: true, playsInline: true, muted: true });
       archivo = { blob: f, tipo: f.type };
-      $('previa').replaceChildren(v);
+      // Duración visible antes de mandar: el servidor solo guarda los primeros 20 segundos.
+      const seg = await new Promise((ok) => { v.onloadedmetadata = () => ok(v.duration); v.onerror = () => ok(NaN); });
+      const dur = document.createElement('p');
+      dur.className = 'duracion';
+      if (Number.isFinite(seg)) {
+        const t = `${Math.floor(seg / 60)}:${String(Math.round(seg % 60)).padStart(2, '0')}`;
+        dur.textContent = seg > 20.5 ? `Dura ${t}: a ${alias} solo le llegarán los primeros 20 segundos.` : `Dura ${t}.`;
+        if (seg > 20.5) dur.classList.add('largo');
+      }
+      $('previa').replaceChildren(v, dur);
     } else {
       const { blob, vista, tipo } = await prepararFoto(f);
       archivo = { blob, tipo };

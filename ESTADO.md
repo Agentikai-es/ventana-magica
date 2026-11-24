@@ -32,6 +32,8 @@
 - 24 nov: avisos claros si falta la voz o ffmpeg; la voz nunca deja a la tablet esperando más de 25 s.
 - 24 nov: `npm run comprobar`, chequeo de 11 puntos antes de la demo (hoy: todo listo).
 - 24 nov: foco y anuncios accesibles en el juego y el chat.
+- 24 nov: demo pública en Render (https://ventana-magica.onrender.com), se borra sola cada 6 h.
+- 24 nov: la familia ve cuánto dura su vídeo y un aviso si pasa de 20 s.
 
 ## Falta
 - Instalar en una Raspberry Pi real (`bash scripts/instalar-raspberry.sh`) y probar su wifi propia.
