@@ -150,12 +150,14 @@ function pintarSonido() {
 $('sonido').onclick = () => { alternarSonido(); pintarSonido(); };
 
 // Voz local: se graba aquí y se transcribe en el servidor del hospital.
+const SEGUNDOS_VOZ = 5;
 let grabacion = null;
 $('mic').onclick = async () => {
   if (grabacion) { grabacion.terminar(); return; }
   window.speechSynthesis?.cancel();
   try {
-    grabacion = await grabar({ max: 20 });
+    // Frases cortas (5 s como máximo): en la Raspberry Pi la voz tarda menos y el niño no se cansa.
+    grabacion = await grabar({ max: SEGUNDOS_VOZ, alTick: (s) => { $('micTexto').textContent = `Ya está · ${SEGUNDOS_VOZ - s}`; } });
   } catch {
     $('estado').textContent = 'No puedo usar el micrófono. Escribe o toca un lugar.';
     return;
@@ -163,7 +165,7 @@ $('mic').onclick = async () => {
   $('mic').classList.add('grabando');
   $('mic').firstElementChild.innerHTML = ICONOS.parar;
   $('micTexto').textContent = 'Ya está';
-  $('estado').textContent = 'Te escucho… di adónde quieres ir y toca «Ya está».';
+  $('estado').textContent = 'Te escucho… di adónde quieres ir (tienes 5 segundos).';
   const audio = await grabacion.listo;
   grabacion = null;
   $('mic').classList.remove('grabando');
@@ -171,7 +173,7 @@ $('mic').onclick = async () => {
   $('micTexto').textContent = 'Hablar';
   $('estado').textContent = 'Pensando…';
   try {
-    const { texto } = await api('/api/voz', { metodo: 'POST', cuerpo: audio, tipo: audio.type || 'audio/webm', espera: 25000 });
+    const { texto } = await api('/api/voz', { metodo: 'POST', cuerpo: audio, tipo: audio.type || 'audio/webm', espera: 15000 });
     $('estado').textContent = texto ? `He oído «${texto}». ${pedir(texto)}` : 'No te he oído bien. ¿Lo repites?';
   } catch (e) { $('estado').textContent = e.message; elegirPestana('Lugares'); }
 };

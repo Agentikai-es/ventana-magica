@@ -7,6 +7,7 @@ import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { AMBIENTES } from '../web/lib/catalogo.js';
 
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));
 // Modelo de voz: el que haya en modelos/, del más preciso al más ligero (en una Raspberry Pi se instala «base» o «tiny»).
@@ -17,6 +18,16 @@ const HILOS = String(Math.max(1, Math.min(4, (await import('node:os')).available
 const LOCALES = [join(RAIZ, 'herramientas', 'bin', 'whisper-cli'), join(RAIZ, 'herramientas', 'whisper.cpp', 'build', 'bin', 'whisper-cli')];
 const WHISPER = process.env.VP_WHISPER_BIN || LOCALES.find((p) => existsSync(p)) || 'whisper-cli';
 export const FFMPEG = process.env.VP_FFMPEG_BIN || 'ffmpeg';
+
+// Ajustes para una Raspberry Pi 4 (CPU, sin GPU). Objetivo: menos de 4 s por frase.
+export const MAX_SEGUNDOS = 5;            // frases cortas: el niño pide un sitio, no cuenta una historia
+const OPCIONES_RAPIDAS = [
+  '-bs', '1', '-bo', '1',                 // búsqueda voraz: una sola hipótesis, sin haz
+  '-ac', String(Number(process.env.VP_WHISPER_CTX) || 512), // contexto de ~10 s en vez de 30 s: unas 3 veces menos cálculo
+  ...(process.env.VP_WHISPER_SIN_GPU === '1' ? ['-ng'] : []), // solo CPU, como en la Pi (para medir en un Mac)
+];
+// Pista de vocabulario: nombres del catálogo para que acierte «Gran Muralla», «Zaragoza»…
+export const PISTA = `Lugares: ${Object.values(AMBIENTES).map((a) => a.nombre).join(', ')}.`.slice(0, 600);
 
 // Frases que whisper «inventa» con silencio o ruido. Se tratan como vacío.
 const ALUCINACIONES = [
@@ -62,22 +73,26 @@ export async function transcribir(audio) {
   const wav = join(dir, 'audio.wav');
   try {
     await writeFile(entrada, audio);
-    await ejecutar(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-i', entrada, '-t', '20', '-ar', '16000', '-ac', '1', '-c:a', 'pcm_s16le', wav]);
-    const salida = await ejecutar(WHISPER, ['-m', MODELO, '-l', 'es', '-t', HILOS, '-nt', '-np', '-f', wav], 60000);
-    return limpiarTranscripcion(salida);
+    await ejecutar(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-i', entrada, '-t', String(MAX_SEGUNDOS), '-ar', '16000', '-ac', '1', '-c:a', 'pcm_s16le', wav]);
+    return limpiarTranscripcion(await transcribirWav(wav));
   } finally {
     await rm(dir, { recursive: true, force: true }); // el audio se borra siempre, también si falla
   }
 }
 
-// Primera transcripción en frío (carga del modelo en la GPU): se hace al arrancar con 1 s de silencio.
+// Transcribe un WAV ya preparado (16 kHz mono). Lo usan la ruta de voz, la medición y la prueba de tiempo.
+export function transcribirWav(wav, { modelo = MODELO, hilos = HILOS } = {}) {
+  return ejecutar(WHISPER, ['-m', modelo, '-l', 'es', '-t', String(hilos), ...OPCIONES_RAPIDAS, '--prompt', PISTA, '-nt', '-np', '-f', wav], 60000);
+}
+
+// Primera transcripción en frío (carga el modelo en memoria; en la Pi, en la caché del disco): se hace al arrancar con 1 s de silencio.
 export async function calentar() {
   if (!vozDisponible()) return;
   const dir = await mkdtemp(join(tmpdir(), 'vp-voz-'));
   try {
     const wav = join(dir, 'silencio.wav');
     await ejecutar(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', 'anullsrc=r=16000:cl=mono', '-t', '1', wav]);
-    await ejecutar(WHISPER, ['-m', MODELO, '-l', 'es', '-nt', '-np', '-f', wav], 120000);
+    await transcribirWav(wav);
   } catch {} finally {
     await rm(dir, { recursive: true, force: true });
   }
