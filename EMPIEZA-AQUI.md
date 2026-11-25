@@ -43,7 +43,10 @@ cd ~/dev/ventana-peque && npm run demo
 - En el Mac, la app queda en `http://localhost:8080`. Los móviles en la misma wifi entran por `https://<IP-del-Mac>:8443`.
 - Para eso, cada móvil tiene que instalar una vez `https://<IP-del-Mac>:8443/ca.pem`. Los pasos están en el README, en «Móviles en la wifi de la caja».
 
-**Plan C (respaldo):** la demo antigua en Render, https://ventana-magica.onrender.com. Tarda ~1 minuto en despertar.
+**Plan C (para la wifi del recinto): Render**, https://ventana-magica.onrender.com.
+- Tiene la misma versión que Oracle (actualizada el 25 nov) y **sí pasa el cortafuegos del recinto**.
+- Si lleva rato sin uso, tarda ~1 minuto en despertar: ábrelo un rato antes de la demo.
+- Se actualiza solo con cada `git push` a `main`.
 
 ## Arrancar y mantener
 | Qué | Comando |
