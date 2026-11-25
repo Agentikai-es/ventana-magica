@@ -25,7 +25,7 @@ export const MENSAJES = {
 export class ErrorApi extends Error {}
 
 // Petición a la API. Añade la cabecera anti-CSRF y convierte errores en mensajes claros.
-export async function api(ruta, { metodo = 'GET', cuerpo, tipo, cabeceras = {}, redirigir = !ruta.startsWith('/api/panel'), espera } = {}) {
+export async function api(ruta, { metodo = 'GET', cuerpo, tipo, cabeceras = {}, redirigir = !ruta.startsWith('/api/panel'), espera, crudo = false } = {}) {
   const h = { ...cabeceras };
   let body = cuerpo;
   if (metodo !== 'GET') h['x-vp'] = '1';
@@ -37,6 +37,7 @@ export async function api(ruta, { metodo = 'GET', cuerpo, tipo, cabeceras = {}, 
   } catch (e) {
     throw new ErrorApi(e?.name === 'TimeoutError' ? MENSAJES.voz_lenta : MENSAJES.sin_conexion);
   }
+  if (crudo && r.ok) return r; // respuesta tal cual (audio, archivos)
   const datos = await r.json().catch(() => ({}));
   if (r.status === 401 && redirigir) { location.href = '/?sin=acceso'; throw new ErrorApi(MENSAJES.sin_acceso); }
   if (!r.ok) throw new ErrorApi(MENSAJES[datos.error] || 'Algo ha fallado. Inténtalo otra vez.');

@@ -25,6 +25,7 @@ async function aplicar(esc, { guardar = true } = {}) {
   pintarEscena($('escena'), componerEscena(esc));
   $('titulo').textContent = esc.nombre;
   $('narracion').textContent = narrar(esc);
+  pedirNarracion($('narracion').textContent); // se prepara ya: al tocar «Escuchar» suena al momento
   $('alternativas').replaceChildren();
   for (const b of $('lugares').children) b.setAttribute('aria-pressed', String(b.dataset.id === esc.ambiente));
   paisaje(AMBIENTES[esc.ambiente].sonido, esc.clima);
@@ -178,16 +179,36 @@ $('mic').onclick = async () => {
   } catch (e) { $('estado').textContent = e.message; elegirPestana('Lugares'); }
 };
 
-// Lectura en voz alta: solo voces del propio dispositivo.
-$('leer').onclick = () => {
+// Lectura en voz alta: primero Piper, la voz local de la caja (igual en todos los móviles); si no está
+// o tarda más de 3 s, la voz del propio dispositivo. Nunca voces de internet.
+let narracionPedida = null; // { texto, audio: Promise<Blob|null> }
+function pedirNarracion(texto) {
+  if (!estado?.habla || !texto) return null;
+  if (narracionPedida?.texto !== texto) {
+    narracionPedida = { texto, audio: api('/api/hablar', { metodo: 'POST', cuerpo: { texto }, crudo: true, espera: 20000 }).then((r) => r.blob()).catch(() => null) };
+  }
+  return narracionPedida.audio;
+}
+let reproductor = null;
+function leerConDispositivo(texto) {
   if (!('speechSynthesis' in window)) return;
   const voces = speechSynthesis.getVoices().filter((v) => v.lang.startsWith('es') && v.localService);
   const v = voces.find((x) => x.lang === 'es-ES') || voces[0];
   if (!v) { $('estado').textContent = 'Este dispositivo no tiene voz en español instalada.'; return; }
   speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance($('narracion').textContent);
+  const u = new SpeechSynthesisUtterance(texto);
   u.voice = v; u.lang = v.lang; u.rate = 0.92;
   speechSynthesis.speak(u);
+}
+$('leer').onclick = async () => {
+  const texto = $('narracion').textContent;
+  reproductor?.pause(); window.speechSynthesis?.cancel();
+  const pedida = pedirNarracion(texto);
+  const audio = pedida ? await Promise.race([pedida, new Promise((r) => setTimeout(() => r(null), 3000))]) : null;
+  if (!audio) return leerConDispositivo(texto);
+  reproductor = new Audio(URL.createObjectURL(audio));
+  reproductor.onended = () => URL.revokeObjectURL(reproductor.src);
+  reproductor.play().catch(() => leerConDispositivo(texto));
 };
 
 $('enviarPostal').onclick = () => {

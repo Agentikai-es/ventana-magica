@@ -16,6 +16,7 @@
     "demo": "VP_DEMO=1 node servidor/servidor.mjs",
     "comprobar": "bash scripts/comprobar.sh",
     "ia": "bash scripts/instalar-ia.sh",
-    "medir-voz": "node scripts/medir-voz.mjs"
+    "medir-voz": "node scripts/medir-voz.mjs",
+    "habla": "bash scripts/instalar-habla.sh"
   }
 }

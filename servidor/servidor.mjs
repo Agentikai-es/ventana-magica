@@ -18,6 +18,7 @@ import { crearJuego } from './juego.mjs';
 import { transcribir, vozDisponible, calentar, ejecutar, FFMPEG, ffmpegDisponible } from './voz.mjs';
 import { construirEscenario, interpretar } from '../web/lib/escenario.js';
 import { entender, iaDisponible, calentarIA, pararIA } from './ia.mjs';
+import { hablar, hablaDisponible, MAX_TEXTO } from './habla.mjs';
 import { AVATARES } from '../web/lib/catalogo.js';
 
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));
@@ -277,7 +278,7 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
     return {
       alias: e.alias, avatar: e.avatar, escena: e.escena ? JSON.parse(e.escena) : null, fotos, lado: e.lado || 3,
       puzle: { total: PIEZAS_PUZLE, hechas, mensaje: hechas >= PIEZAS_PUZLE ? e.mensaje_puzle : null },
-      voz: vozDisponible(), ia: iaDisponible(), emojis: EMOJIS_REACCION, chats: juego.chatsNino(espacioId),
+      voz: vozDisponible(), habla: hablaDisponible(), ia: iaDisponible(), emojis: EMOJIS_REACCION, chats: juego.chatsNino(espacioId),
       comunidad: !!e.comunidad, planta: planta.conversaciones(espacioId), animos: ANIMOS,
     };
   }
@@ -447,6 +448,25 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
       const trabajo = colaVoz.then(() => entender(frase, { avatar: repo.espacio(av.espacio_id).avatar }));
       colaVoz = trabajo.catch(() => {});
       return json(res, 200, { escenario: await trabajo });
+    }
+
+    // Voz que sale: Piper lee la narración dentro de la caja. Solo texto (lo genera la propia ventana), nunca audio del niño.
+    if (ruta === '/api/hablar' && m === 'POST') {
+      const av = acceso(req, 'ventana');
+      limitar(`habla:${av.id}`, 60);
+      const { texto, voz } = await leerJSON(req);
+      const limpio = limpiarTexto(texto, MAX_TEXTO + 1);
+      if (!limpio || limpio.length > MAX_TEXTO) throw new ErrorHttp(400, 'texto');
+      const v = ['es_ES', 'es_MX'].includes(voz) ? voz : undefined;
+      if (!hablaDisponible(v)) throw new ErrorHttp(503, 'habla_no_disponible');
+      try {
+        const audio = await hablar(limpio, { voz: v });
+        res.writeHead(200, { 'Content-Type': 'audio/mp4', 'Content-Length': audio.length, 'Cache-Control': 'no-store' });
+        return res.end(audio);
+      } catch (e) {
+        registrar('Error de Piper:', e.message);
+        throw new ErrorHttp(500, 'habla_fallo');
+      }
     }
 
     if (ruta === '/api/voz' && m === 'POST') {
