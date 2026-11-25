@@ -31,16 +31,26 @@ El servidor muestra:
 6. **Tablet**: Leo contesta con una postal-acertijo desde su ventana (o un audio, o una foto-puzle con mensaje secreto). Mamá la aprueba.
 7. **Móvil de la abuela**: adivina «¿Dónde está Leo hoy?» y desbloquea su mensaje.
 
-## En una Raspberry Pi (o cualquier mini ordenador con Linux)
+## En la caja: Raspberry Pi 4 (4 GB, Raspberry Pi OS de 64 bits)
 ```bash
-bash scripts/instalar-raspberry.sh
+bash scripts/instalar-raspberry.sh              # hospital
+DEMO=si bash scripts/instalar-raspberry.sh      # demo: códigos fijos 123456, 111111, 222222…
 ```
-Instala Node 22, ffmpeg y whisper.cpp; elige el modelo de voz según la memoria (`base` con 6 GB o más, `tiny` con menos), crea los certificados y deja el servidor arrancando solo al encender. Funciona en Raspberry Pi 4 y 5 con Raspberry Pi OS de 64 bits. Los vídeos no se recodifican salvo que haga falta, para no cargar la Pi.
+En unos 20–30 minutos deja todo listo:
+- Instala Node 22, ffmpeg, whisper.cpp con el modelo `tiny` (con menos de 6 GB de RAM) y Piper con la voz es_ES.
+- Crea la wifi propia `VentanaMagica` (la caja queda en `https://10.42.0.1:8443`) y los certificados.
+- Deja el servidor arrancando solo al encender (systemd).
+- Al terminar, mide la voz (`npm run medir-voz`, objetivo: menos de 4 s por frase) y hace el chequeo (`npm run comprobar`).
 
-## Tablets en la wifi (HTTPS)
-El micrófono exige HTTPS. Cada tablet confía una vez en la autoridad local:
-- **iPad:** abre `https://<IP>:8443/ca.pem` → Ajustes → Perfil descargado → Instalar. Después: Ajustes → General → Información → Ajustes de confianza de certificados → activar.
-- **Android:** descarga `ca.pem` → Ajustes → Seguridad → Instalar certificado CA.
+Otras herramientas:
+- `npm run medir-voz -- tiny base` compara modelos.
+- `npm run habla` instala o actualiza la voz que lee (con `VOCES="es_ES es_MX"`, las dos).
+
+## Móviles en la wifi de la caja (HTTPS)
+La wifi de la caja no tiene internet a propósito. El micrófono exige HTTPS, así que cada móvil confía una vez en la autoridad local:
+- **Android:** al conectarte a `VentanaMagica`, si avisa de «sin internet», elige **Mantener conexión**. Luego abre `https://10.42.0.1:8443/ca.pem` → Ajustes → Seguridad → Instalar certificado CA.
+- **iPhone / iPad:** abre `https://10.42.0.1:8443/ca.pem` → Ajustes → Perfil descargado → Instalar. Después ve a Ajustes → General → Información → Ajustes de confianza de certificados y actívalo.
+- Si el móvil tiene «datos móviles» activos, puede intentar salir por ellos: para la demo, mejor en modo avión con solo la wifi encendida.
 
 ## Estructura
 - `servidor/`: servidor HTTP/HTTPS, base de datos SQLite, voz local y pruebas.
