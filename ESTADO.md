@@ -1,14 +1,48 @@
 # Estado · Ventana Mágica
 
-Última actualización: 24 nov 2026 (tarde-noche)
+Última actualización: 25 nov 2026 (día 2)
 
 ## Cómo comprobarlo (para OpenBot y el equipo)
-- Pruebas: `timeout 240 npm test` (72 pruebas). Las de `mvp/` son del prototipo antiguo y ya no reflejan la app.
+- Pruebas: `npm test` (80 pruebas). Las de `mvp/` son del prototipo antiguo y ya no reflejan la app.
 - Arrancar: `npm start` → `http://localhost:8080`. Panel: `/panel` con la clave de `datos/ACCESOS-DEMO.md` (no va a git).
 
 ## Demo en vivo
 - https://ventana-magica.onrender.com · códigos 123456 (tablet), 111111 (familia), 222222 (adulto). Plan gratuito: la primera visita tras 15 min sin uso tarda ~1 min en despertar. Se borra sola cada 6 h. Sin voz (en la nube solo texto y lugares). Clave del panel: en `datos/ACCESOS-DEMO.md`.
 - Código: https://github.com/Agentikai-es/ventana-magica
+
+## Día 2 (25 nov): caja Raspberry Pi 4 + móvil
+Decisión de IT: la caja es una Raspberry Pi 4 (4 GB) y la pantalla del niño es un móvil. Hoy no se ha hecho push ni deploy: todo son commits locales.
+
+**Qué ha cambiado**
+- **Voz que entra (whisper.cpp), ajustada a la Pi:**
+  - Frases de 5 s como máximo; el móvil muestra una cuenta atrás.
+  - Búsqueda voraz (`-bs 1 -bo 1`) y contexto de audio de ~10 s (`-ac 512`).
+  - Pista de vocabulario con los lugares del catálogo y 4 hilos.
+  - Se calienta al arrancar.
+- **Voz que sale (Piper, local):**
+  - La caja lee la narración con la voz es_ES (davefx) o es_MX (ald).
+  - Se prepara al cambiar de escena, así que «Escuchar» suena al momento.
+  - Si no hay Piper o tarda más de 3 s, se usa la voz del móvil.
+- **Medición:** `npm run medir-voz` (en la Pi la ejecuta el instalador al terminar) y una prueba que falla si 5 s de voz tardan más de `VP_PRESUPUESTO_VOZ_MS` (4000).
+- **Instalador de la Pi:**
+  - Swap temporal de 1 GB para compilar.
+  - Piper con la voz es_ES.
+  - `DEMO=si` para tener los códigos fijos.
+  - Medida de voz y chequeo al final.
+  - El README explica cómo usar los móviles en la wifi sin internet.
+
+**Medido (Mac M1, 8 GB, 4 hilos, frases de 5 s con voz sintética, 3 repeticiones)**
+
+| Modelo | Mediana | Peor | Aciertos de lugar |
+|---|---|---|---|
+| tiny q5_1 | 243 ms | 259 ms | 5 de 5 |
+| base q5_1 | 288 ms | 300 ms | 5 de 5, y transcribe mejor |
+| small q5_1 | 536 ms | 552 ms | 5 de 5 |
+
+- Solo CPU (`VP_WHISPER_SIN_GPU=1`): tiny 236 ms y base 310 ms.
+- Piper medium es_ES: 6 s de audio en 0,8–1,0 s; desde la caché, 1 ms.
+
+**Pendiente: medir en la Raspberry Pi 4 real.** La Pi 4 es bastante más lenta que el M1 y las cifras del Mac no valen para ella. Cuando llegue: `DEMO=si bash scripts/instalar-raspberry.sh`, que mide al terminar. Si pasa de 4 s, primero `VP_WHISPER_CTX=384`, y si no basta, frases más cortas.
 
 ## Documentos
 - Presentación profesional (12 diapositivas, con notas del orador): https://claude.ai/artifact/7wZSB4TxUtFVAeTJRsyiRj
