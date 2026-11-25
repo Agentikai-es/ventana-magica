@@ -10,8 +10,8 @@ html { accent-color: var(--acento); caret-color: var(--acento); scrollbar-color:
 .icono { width: 1.25em; height: 1.25em; flex: none; display: block; }
 [data-icono] { display: inline-flex; }
 html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; font-family: var(--redondo); background: radial-gradient(circle at 50% -20%, #2c3566, var(--noche) 60%) fixed; color: var(--texto); min-height: 100vh; }
-main { max-width: 1240px; margin: 0 auto; padding: 1.1rem 1rem 3rem; }
+body { margin: 0; font-family: var(--redondo); background: radial-gradient(circle at 50% -20%, #2c3566, var(--noche) 60%) fixed; color: var(--texto); min-height: 100vh; min-height: 100dvh; }
+main { max-width: 1240px; margin: 0 auto; padding: max(1.1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(3rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); }
 header.barra { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
 header.barra h1 { font-size: 1.65rem; margin: 0; line-height: 1.2; display: flex; align-items: center; gap: .55rem; }
 header.barra h1 .icono { width: 1.1em; height: 1.1em; color: var(--acento); }
@@ -23,6 +23,8 @@ a { color: var(--acento-2); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 button, .boton { font: inherit; cursor: pointer; border: 0; border-radius: 999px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: .4rem; }
+/* Objetivo táctil mínimo para dedos pequeños (móvil): 44 × 44 px */
+button, .boton { min-width: 44px; min-height: 44px; }
 button:disabled { opacity: .55; cursor: default; }
 .principal:disabled { background: var(--noche-3); color: var(--suave); opacity: 1; }
 button:not(:disabled):active { transform: translateY(1px); }
@@ -111,7 +113,7 @@ label { display: grid; gap: .35rem; font-weight: 600; }
 .vista { container-type: size; }
 
 /* ---------- Puzle ---------- */
-.puzle-juego { --lado: 3; display: grid; grid-template-columns: repeat(var(--lado), 1fr); gap: 4px; width: min(100%, 58vh, 520px); aspect-ratio: 1; margin: 0 auto;
+.puzle-juego { --lado: 3; display: grid; grid-template-columns: repeat(var(--lado), 1fr); gap: 4px; width: min(100%, 58vh, 520px); width: min(100%, 58dvh, 520px); min-width: calc(var(--lado) * 44px + 20px); aspect-ratio: 1; margin: 0 auto;
   padding: 6px; background: var(--marco); border-radius: 20px; box-shadow: 0 2px 0 var(--marco-sombra) inset, 0 14px 40px #0006; touch-action: none; }
 .pieza-puzle { aspect-ratio: 1; border-radius: 10px; padding: 0; border: 0; background-repeat: no-repeat; box-shadow: 0 2px 6px #0003;
   transition: transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s, outline-color .18s; outline: 3px solid transparent; outline-offset: -3px; }
@@ -124,12 +126,12 @@ label { display: grid; gap: .35rem; font-weight: 600; }
 .puzle-estado { text-align: center; margin: .7rem 0 0; color: var(--tinta); font-weight: 700; }
 
 /* ---------- Hoja grande (juego y chat) ---------- */
-dialog.hoja { width: min(96vw, 760px); max-height: 94vh; padding: 0; border: 0; border-radius: 28px; background: var(--crema); color: var(--tinta); overflow: auto; }
+dialog.hoja { width: min(96vw, 760px); max-height: 94vh; max-height: 94dvh; padding: 0; border: 0; border-radius: 28px; background: var(--crema); color: var(--tinta); overflow: auto; }
 dialog.hoja::backdrop { background: #0b0e1ed9; backdrop-filter: blur(4px); }
 .hoja-cab { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.3rem; background: var(--crema); border-bottom: 1px solid #2b2d4214; }
 .hoja-cab h2 { margin: 0; color: var(--tinta); font-size: 1.3rem; display: flex; align-items: center; gap: .5rem; }
 .hoja-cuerpo { padding: 1.2rem 1.3rem 1.5rem; }
-.cerrar-x { background: #2b2d420f; color: var(--tinta); width: 2.6rem; height: 2.6rem; font-size: 1.3rem; font-weight: 700; }
+.cerrar-x { flex: none; background: #2b2d420f; color: var(--tinta); width: 2.75rem; height: 2.75rem; font-size: 1.3rem; font-weight: 700; }
 .pasos { display: flex; gap: .4rem; justify-content: center; margin-bottom: 1rem; }
 .pasos span { width: 2.2rem; height: .4rem; border-radius: 9px; background: #2b2d421f; }
 .pasos span.hecho { background: var(--acento); }
@@ -143,7 +145,7 @@ dialog.hoja::backdrop { background: #0b0e1ed9; backdrop-filter: blur(4px); }
 .pistas li { background: #fff; border-radius: 16px; padding: .7rem 1rem; font-size: 1.05rem; box-shadow: 0 2px 8px #2b2d4210; animation: aparecer .4s ease both; }
 .pistas li b { color: #b8641a; }
 @keyframes aparecer { from { opacity: 0; translate: 0 8px; } }
-.revelado img, .revelado video { width: 100%; max-height: 52vh; object-fit: contain; border-radius: 18px; background: #000; display: block; }
+.revelado img, .revelado video { width: 100%; max-height: 52vh; max-height: 52dvh; object-fit: contain; border-radius: 18px; background: #000; display: block; }
 .quien { font-size: 1.5rem; font-weight: 800; margin: 1rem 0 .2rem; }
 .boton-oscuro { background: var(--tinta); color: #fff; padding: .75rem 1.2rem; font-weight: 700; }
 
@@ -182,3 +184,28 @@ dialog.hoja::backdrop { background: #0b0e1ed9; backdrop-filter: blur(4px); }
 .limpieza p { margin: 0; font-size: 1.4rem; font-weight: 800; }
 .limpieza b { font-size: 4.5rem; line-height: 1; font-variant-numeric: tabular-nums; color: var(--acento); }
 .limpieza small { color: var(--suave); font-size: 1rem; }
+
+/* ---------- Móvil: hojas a pantalla completa ---------- */
+@media (max-width: 600px), (orientation: landscape) and (max-height: 500px) {
+  dialog.hoja { width: 100%; max-width: 100%; height: 100%; max-height: 100%; height: 100dvh; max-height: 100dvh; margin: 0; border-radius: 0; }
+  dialog.hoja[open] { display: flex; flex-direction: column; }
+  dialog.hoja > .hoja-cuerpo { flex: 1 0 auto; }
+  .hoja-cab { padding: max(.6rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) .6rem max(1rem, env(safe-area-inset-left)); }
+  .hoja-cab h2 { font-size: 1.15rem; }
+  .hoja-cuerpo { padding: 1rem max(1rem, env(safe-area-inset-right)) max(1.2rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); }
+  .componer { padding: .7rem max(1rem, env(safe-area-inset-right)) max(.8rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); }
+  .opciones { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+  .burbuja { max-width: 88%; }
+  /* Las herramientas del chat van en filas deslizables para dejar sitio a la conversación */
+  .componer .herr { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -1rem; padding-inline: 1rem; scroll-padding-inline: 1rem; }
+  .componer .herr::-webkit-scrollbar { display: none; }
+  .componer .herr > * { flex: none; }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .hoja-cuerpo { padding-top: .6rem; }
+  .pasos { margin-bottom: .5rem; }
+  .puzle-juego { width: min(100%, calc(100dvh - 10.5rem), 520px); }
+  .puzle-estado { margin-top: .4rem; }
+  .revelado img, .revelado video { max-height: 60dvh; }
+  .componer { gap: .4rem; padding-top: .5rem; }
+}
