@@ -50,3 +50,13 @@ test('sin modelo, /api/ia responde 503 y la ventana dice que no hay IA', async (
   srv.close(); app.cerrar(); delete process.env.VP_IA;
   await rm(dir, { recursive: true, force: true });
 });
+
+test('ideas variables: la IA recibe temas al azar (no texto del niño) y solo vale lo que está en el catálogo', async () => {
+  const { idear, TEMAS } = await import('./ia.mjs');
+  const vistos = [];
+  const respuestas = ['{"lugar":"arrecife","momento":"dia","clima":"burbujas","personajes":["pulpo"]}', '{"lugar":"inventado"}', '{"lugar":"playa"}', '{"lugar":"ordesa","momento":"atardecer","clima":"hojas","personajes":[]}'];
+  const ideas = await idear({ avatar: 'zorrito', evitar: ['playa'], preguntarA: async (t) => { vistos.push(t); return respuestas.shift(); } });
+  assert.deepEqual(ideas.map((i) => i.ambiente), ['arrecife', 'ordesa'], 'descarta lo inventado y lo que hay que evitar');
+  assert.ok(vistos.every((t) => TEMAS.includes(t)));
+  assert.deepEqual(await idear({ preguntarA: async () => { throw new Error('sin modelo'); } }), [], 'si la IA falla, no hay ideas y la tablet usa las suyas');
+});

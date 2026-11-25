@@ -9,8 +9,10 @@ import { ICONOS, ponerIconos } from './iconos.js';
 import { paisaje, efecto, alternarSonido, sonidoActivo } from './sonido.js';
 import { crearPuzle } from './puzle.js';
 import { grabar, grabadoraDisponible, mmss } from './grabador.js';
+import { iniciarRecompensas, pintarEstrellas, celebrar, botonRegalo, refrescarJardin } from './jardin.js';
 
 ponerIconos();
+iniciarRecompensas({ aviso: (t) => aviso(t), recargar: () => recargar() });
 
 let estado = null;      // lo que devuelve /api/ventana
 let actual = null;      // escenario en pantalla
@@ -28,7 +30,7 @@ async function aplicar(esc, { guardar = true } = {}) {
   pedirNarracion($('narracion').textContent); // se prepara ya: al tocar «Escuchar» suena al momento
   $('alternativas').replaceChildren();
   for (const b of $('lugares').children) b.setAttribute('aria-pressed', String(b.dataset.id === esc.ambiente));
-  paisaje(AMBIENTES[esc.ambiente].sonido, esc.clima);
+  paisaje(AMBIENTES[esc.ambiente].sonido, esc.clima, esc.momento);
   // Copia local del escenario (solo catálogo, nada personal) para abrir igual sin conexión.
   // Lugares ya visitados (solo en esta tablet): las ideas proponen sitios nuevos.
   const visitados = JSON.parse(localStorage.getItem('vp-visitados') || '[]');
@@ -53,7 +55,8 @@ function mostrarAlternativas(r) {
     const b = document.createElement('button');
     b.type = 'button';
     const icono = AMBIENTES[alt.ambiente].monumento || PERSONAJES[alt.personajes[0]].emoji;
-    b.textContent = alt.conAmigo ? `${icono} Con ${alt.conAmigo.alias} en ${alt.nombre}` : `${icono} ${alt.nombre}`;
+    b.textContent = alt.conAmigo ? `${icono} Con ${alt.conAmigo.alias} en ${alt.nombre}` : `${alt.tema ? '✨ ' : ''}${icono} ${alt.nombre}`;
+    if (alt.tema) b.title = 'Idea nueva de la ventana';
     b.onclick = () => {
       if (alt.conAmigo) return irDeVisita(alt.conAmigo.id);
       efecto('magia'); aplicar(construirEscenario(alt.ambiente, { avatar, momento: alt.momento, clima: alt.clima }));
@@ -70,8 +73,21 @@ function mostrarIdeas() {
   });
   mostrarAlternativas({ tipo: 'alternativas', motivo: 'no_se', alternativas: ideas });
   efecto('toque');
+  // Con la IA local de la caja, las ideas cambian cada vez: sustituye las de lugares por propuestas nuevas.
+  if (estado?.ia) {
+    const pedidas = Date.now();
+    ultimaIdea = pedidas;
+    const visitados = JSON.parse(localStorage.getItem('vp-visitados') || '[]');
+    api('/api/ia/ideas', { metodo: 'POST', cuerpo: { evitar: [actual?.ambiente, ...visitados.slice(-8)].filter(Boolean) }, espera: 25000 }).then(({ ideas: ia }) => {
+      if (ultimaIdea !== pedidas || !ia?.length) return;
+      const conAmigo = ideas.filter((x) => x.conAmigo);
+      const mezcla = [...conAmigo, ...ia, ...ideas.filter((x) => !x.conAmigo)].filter((x, i, l) => l.findIndex((y) => y.ambiente === x.ambiente) === i).slice(0, 3);
+      mostrarAlternativas({ tipo: 'alternativas', motivo: 'no_se', alternativas: mezcla });
+    }).catch(() => {});
+  }
   return '¿Qué te parecen estas ideas?';
 }
+let ultimaIdea = 0;
 $('ideas').onclick = () => { $('estado').textContent = mostrarIdeas(); };
 
 function pedir(frase) {
@@ -233,7 +249,7 @@ $('limpiar').onclick = () => {
 };
 
 // =============== Pestañas ===============
-const PESTANAS = ['Buzon', 'Gente', 'Amigos', 'Lugares'];
+const PESTANAS = ['Buzon', 'Gente', 'Amigos', 'Jardin', 'Lugares'];
 function elegirPestana(nombre) {
   for (const p of PESTANAS) {
     const sel = p === nombre;
@@ -390,6 +406,7 @@ function mostrarAcertijo(f) {
     quien.marcar(r.quien); donde?.marcar(r.donde);
     Object.assign(f, r.foto);
     if (r.foto.juego === 'descubierto') {
+      setTimeout(() => celebrar(r.estrellas, 'por resolver la carta'), 500);
       efecto(r.quien && r.donde ? 'acierto' : 'llega');
       aviso.textContent = r.quien && r.donde ? '¡Lo has adivinado!' : '¡Casi! Te lo cuento yo…';
       setTimeout(async () => { await recargar(); mostrarDescubierta(estado.fotos.find((x) => x.id === f.id) || f); }, 1100);
@@ -682,6 +699,7 @@ function burbujaAmigo(m, a) {
           b.classList.add(r.acierto ? 'bien' : 'mal');
           efecto(r.acierto ? 'acierto' : 'toque');
           $('chatAviso').textContent = r.acierto ? '¡Has acertado!' : r.mensaje.opciones ? 'Casi… ¡prueba otra vez!' : `Estaba en ${r.mensaje.escena.nombre}.`;
+          celebrar(r.estrellas, `por la postal de ${a.alias}`);
           if (r.acierto || !r.mensaje.opciones) setTimeout(recargar, 700);
         } catch (e) { $('chatAviso').textContent = e.message; }
       };
@@ -696,6 +714,8 @@ function burbujaAmigo(m, a) {
     if (m.tipo === 'puzle' && m.archivo) d.appendChild(img(`/planta/${m.id}`, 'Foto-puzle'));
     texto(m.tipo === 'puzle' ? `Mensaje secreto: «${m.secreto}»` : m.texto);
     if (m.tipo === 'visita' && !m.mio) boton(`¡Voy a ${m.escena?.nombre || 'su mundo'}!`, () => irDeVisita(a.id));
+    const regalo = botonRegalo(m, a.alias);
+    if (regalo) d.appendChild(regalo);
   }
   const meta = document.createElement('div'); meta.className = 'meta';
   const extra = m.estado === 'pendiente' ? 'esperando a que lo vea quien te cuida'
@@ -737,7 +757,9 @@ function montarPuzleAmigo(m, a) {
       const sec = document.createElement('p'); sec.className = 'quien'; sec.textContent = `«${r.mensaje.secreto}»`;
       const volver = document.createElement('button'); volver.type = 'button'; volver.className = 'boton-oscuro'; volver.textContent = `Contestar a ${a.alias}`;
       volver.onclick = () => { $('juego').close(); abrirAmigo(a.id); };
-      $('juegoContenido').replaceChildren(rev, sec, volver);
+      const regalo = botonRegalo({ ...r.mensaje, regalado: false }, a.alias);
+      $('juegoContenido').replaceChildren(rev, sec, ...(regalo ? [regalo] : []), volver);
+      celebrar(r.estrellas, `por el puzle de ${a.alias}`);
       await recargar();
     },
   });
@@ -748,7 +770,8 @@ function aviso(texto) {
   $('estado').textContent = texto;
   const d = document.createElement('div');
   d.className = 'aviso-llegada'; d.textContent = texto; d.setAttribute('aria-hidden', 'true');
-  document.body.appendChild(d);
+  // Con una hoja abierta (capa superior), el aviso va dentro de ella para que se vea.
+  (document.querySelector('dialog[open]') || document.body).appendChild(d);
   setTimeout(() => d.remove(), 4500);
 }
 
@@ -757,6 +780,7 @@ async function recargar() {
   pintarBuzon();
   pintarPersonas();
   pintarAmigos();
+  pintarEstrellas(estado.recompensas);
   if (chatAbierto || amigoAbierto) pintarBurbujas();
 }
 
@@ -782,6 +806,7 @@ async function iniciar() {
   pintarBuzon();
   pintarPersonas();
   pintarAmigos();
+  pintarEstrellas(estado.recompensas);
 
   const nombre = (id) => estado.chats.find((c) => c.accesoId === id)?.nombre || 'Alguien';
   const fuente = escuchar('ventana', {
@@ -796,6 +821,12 @@ async function iniciar() {
         : d.resuelto ? `🎉 ¡${d.de} ha resuelto tu ${d.resuelto === 'postal' ? 'postal-acertijo' : 'foto-puzle'}!`
         : `🏥 ¡${d.de} te ha mandado algo! Míralo en «Amigos».`);
     },
+    regalo: async (d) => {
+      await recargar();
+      efecto('regalo');
+      celebrar({ ganadas: d.estrellas, total: estado.recompensas?.estrellas }, `de regalo: a ${d.de} le gustó tu ${d.tipo === 'postal' ? 'postal' : 'puzle'}`);
+    },
+    jardin: async (d) => { await refrescarJardin(); aviso(`🌸 ¡${d.de} ha plantado una flor en el Jardín de los recuerdos!`); },
     actualizar: () => recargar(),
   });
   fuente.onopen = () => { $('conexion').textContent = 'Conectada'; $('conexion').className = 'aviso ok'; };

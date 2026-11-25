@@ -19,6 +19,9 @@ export const MENSAJES = {
   consentimiento: 'Falta la referencia del consentimiento firmado.',
   clave: 'Clave incorrecta.',
   alias: 'Escribe un alias con letras.',
+  estrellas: 'Aún no tienes 10 estrellas. ¡Resuelve una carta o la postal de un amigo!',
+  flor: 'Esa flor no está en el jardín. Elige otra.',
+  ya_regalado: 'Ya le regalaste estrellas por esto. ¡Gracias!',
   audio_vacio: 'No he oído nada. Toca «Hablar», di adónde quieres ir y luego «Ya está».',
 };
 

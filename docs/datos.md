@@ -13,6 +13,10 @@ Todo se guarda en el servidor del hospital: `datos/ventana.db` (SQLite) y `datos
 | Voz del niño | Personal; biométrica si se reutiliza | Entender la petición | **No se guarda**: archivo temporal que se borra al transcribir | Segundos |
 | Texto transcrito | Personal | Elegir escenario | No se guarda en el servidor | — |
 | Tokens y códigos | Seguridad | Acceso sin cuentas | Solo el **hash** SHA-256 | Caducan (códigos 30 min) |
+| Estrellas (cantidad, motivo, fecha) | No sensible; ligado al alias | Recompensa del juego | `estrellas` | Hasta el alta (se borran con el espacio) |
+| Flores del jardín (tipo, color, sitio) | No personal tras el alta | Jardín de los recuerdos de la planta | `flores` | Al alta pierden el vínculo con el niño (`espacio_id` = NULL) y quedan anónimas |
+| Regalos entre niños (quién a quién) | Personal mínimo (alias) | Reconocimiento y contador «regalos dados» | `estrellas` (motivo `regalo`, `de_espacio`) | Hasta el alta de cualquiera de los dos |
+| «En línea» | No se guarda | Punto verde en el jardín | Solo en memoria (canal de tiempo real abierto) | — |
 | Auditoría (quién aprobó qué, cuándo) | Registro de seguridad | Responsabilidad (art. 5.2 y 32) | `auditoria` | 1 año |
 
 ## Lo que NO se recoge

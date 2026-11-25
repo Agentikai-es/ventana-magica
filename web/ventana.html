@@ -99,7 +99,7 @@
       header.barra { flex-wrap: wrap; gap: .5rem; margin-bottom: .8rem; }
       header.barra h1 { flex: 1 1 100%; font-size: 1.35rem; }
       .derecha-barra { flex: 1 1 100%; min-width: 0; gap: .45rem; }
-      #conexion { margin-left: auto; font-size: .8rem; white-space: nowrap; }
+      #conexion { margin-left: auto; font-size: 0; gap: 0; white-space: nowrap; } /* solo el punto: deja sitio a las estrellas */
       .marco { padding: 8px; border-radius: 24px; }
       .vista { border-radius: 17px; }
       .pedir { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-top: .8rem; }
@@ -147,12 +147,16 @@
       .avatares button span { font-size: 1.8rem; }
     }
   </style>
+  <link rel="icon" href="/icono.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icono-apple.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
 </head>
 <body>
 <main>
   <header class="barra">
     <h1><span data-icono="ventana"></span><span id="saludo">Mi ventana</span></h1>
     <div class="derecha-barra">
+      <button class="estrellas-boton" id="estrellas" type="button" aria-haspopup="dialog" aria-label="Estrellas. Abrir el jardín"><span class="estrella-icono" aria-hidden="true">★</span><b id="estrellasN">0</b></button>
       <button class="redondo" id="limpiar" type="button" aria-label="Limpiar la pantalla" title="Limpiar la pantalla"><span data-icono="gota"></span></button>
       <button class="redondo" id="sonido" type="button" aria-pressed="true" aria-label="Sonido"><span data-icono="altavoz"></span></button>
       <button class="soy" id="soy" type="button" aria-haspopup="dialog"><span class="emoji-avatar" id="soyEmoji" aria-hidden="true">🦊</span><span id="soyNombre">Soy…</span></button>
@@ -193,6 +197,7 @@
         <button role="tab" id="tabBuzon" aria-controls="panelBuzon" aria-selected="true" type="button"><span data-icono="sobre"></span>Buzón<span class="globo oculto" id="globoBuzon"></span></button>
         <button role="tab" id="tabGente" aria-controls="panelGente" aria-selected="false" type="button" tabindex="-1"><span data-icono="charla"></span>Mi gente<span class="globo oculto" id="globoGente"></span></button>
         <button role="tab" id="tabAmigos" aria-controls="panelAmigos" aria-selected="false" type="button" tabindex="-1" class="oculto"><span data-icono="amigos"></span>Amigos<span class="globo oculto" id="globoAmigos"></span></button>
+        <button role="tab" id="tabJardin" aria-controls="panelJardin" aria-selected="false" type="button" tabindex="-1"><span data-icono="flor"></span>Jardín<span class="globo oculto" id="globoJardin"></span></button>
         <button role="tab" id="tabLugares" aria-controls="panelLugares" aria-selected="false" type="button" tabindex="-1"><span data-icono="mapa"></span>Lugares</button>
       </div>
 
@@ -214,6 +219,23 @@
       <section class="panel-lado oculto" id="panelAmigos" role="tabpanel" aria-labelledby="tabAmigos">
         <p class="aviso" style="margin:0">Otros niños de tu planta. Mira dónde está hoy cada uno, mándale ánimo o vete de visita a su mundo.</p>
         <div class="amigos" id="amigos"></div>
+      </section>
+      <section class="panel-lado oculto" id="panelJardin" role="tabpanel" aria-labelledby="tabJardin">
+        <div class="tarjeta-estrellas">
+          <div class="huecos" id="huecos" role="img"></div>
+          <p id="textoEstrellas" style="margin:0;font-weight:700"></p>
+          <div class="fila-jardin">
+            <button type="button" class="principal" id="plantarDesdePanel" disabled><span data-icono="flor"></span>Plantar una flor</button>
+            <button type="button" class="secundario" id="abrirJardin"><span data-icono="mapa"></span>Ver el jardín</button>
+          </div>
+        </div>
+        <h3>Cómo se ganan estrellas</h3>
+        <ul class="como-ganar">
+          <li><span aria-hidden="true">📬</span><span>Resuelve una carta de tu familia o tu clase <b>+1 ★</b></span></li>
+          <li><span aria-hidden="true">🏥</span><span>Resuelve la postal o el puzle de un amigo de la planta <b>+2 ★</b></span></li>
+          <li><span aria-hidden="true">🎁</span><span>Un amigo te regala estrellas porque le gustó lo tuyo <b>+2 ★</b></span></li>
+        </ul>
+        <p class="aviso" style="margin:0">Con 10 estrellas eliges una flor y la plantas en el Jardín de los recuerdos de tu planta. Aquí no gana nadie: el jardín crece entre todos.</p>
       </section>
       <section class="panel-lado oculto" id="panelLugares" role="tabpanel" aria-labelledby="tabLugares">
         <div class="lugares" id="lugares"></div>
@@ -252,6 +274,44 @@
     </div>
     <p class="aviso" id="chatAviso" role="status" style="margin:0;color:#4a4c66"></p>
   </form>
+</dialog>
+
+<!-- Jardín de los recuerdos: el de toda la planta -->
+<dialog class="hoja" id="jardin" aria-labelledby="jardinTitulo">
+  <div class="hoja-cab"><h2 id="jardinTitulo"><span data-icono="flor"></span>Jardín de los recuerdos</h2><button class="cerrar-x" type="button" data-cerrar aria-label="Cerrar">×</button></div>
+  <div class="hoja-cuerpo jardin-cuerpo">
+    <div class="jardin-escena">
+      <div class="jardin-vista" id="jardinVista" role="group" aria-label="Flores del jardín"></div>
+      <p class="jardin-nota" id="jardinNota" role="status"></p>
+    </div>
+    <div class="jardin-datos">
+      <p id="jardinTotal" class="jardin-total"></p>
+      <div class="meta-comun">
+        <p id="metaTexto" style="margin:0 0 .4rem;font-weight:700"></p>
+        <div class="barra-progreso claro" aria-hidden="true"><span id="metaBarra" style="width:0"></span></div>
+        <div class="metas-hechas" id="metasHechas"></div>
+      </div>
+      <button type="button" class="principal" id="plantarFlor" disabled><span data-icono="flor"></span>Plantar mi flor (10 ★)</button>
+      <h3>Quién cuida el jardín</h3>
+      <ul class="companeros" id="companeros"></ul>
+      <p id="jardinRecuerdos" class="aviso oscuro"></p>
+    </div>
+  </div>
+</dialog>
+
+<!-- Elegir flor -->
+<dialog class="hoja" id="plantar" aria-labelledby="plantarTitulo">
+  <div class="hoja-cab"><h2 id="plantarTitulo">Elige tu flor</h2><button class="cerrar-x" type="button" data-cerrar aria-label="Cerrar">×</button></div>
+  <div class="hoja-cuerpo plantar-cuerpo">
+    <div class="previa"><div id="previaFlor" class="previa-flor"></div><b id="previaNombre"></b></div>
+    <div>
+      <h3>¿Qué flor?</h3>
+      <div class="tipos-flor" id="tiposFlor"></div>
+      <h3>¿De qué color?</h3>
+      <div class="colores-flor" id="coloresFlor"></div>
+      <button type="button" class="principal" id="confirmarFlor" style="width:100%;margin-top:1rem"><span data-icono="flor"></span>¡Plantar! (10 ★)</button>
+    </div>
+  </div>
 </dialog>
 
 <div id="limpieza" class="limpieza oculto" tabindex="-1" role="alert" aria-live="assertive">

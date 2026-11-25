@@ -108,12 +108,12 @@ export async function calentarIA() {
   try { await arrancar(); await preguntar('una playa'); } catch {}
 }
 
-async function preguntar(frase, ms = 12000) {
+async function preguntar(frase, ms = 12000, temperatura = 0) {
   await arrancar();
   const r = await fetch(`http://127.0.0.1:${PUERTO}/completion`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ prompt: prompt(frase), json_schema: ESQUEMA, n_predict: 80, temperature: 0, cache_prompt: true }),
+    body: JSON.stringify({ prompt: prompt(frase), json_schema: ESQUEMA, n_predict: 80, temperature: temperatura, cache_prompt: true }),
     signal: AbortSignal.timeout(ms),
   });
   if (!r.ok) throw new Error('ia_fallo');
@@ -124,6 +124,27 @@ async function preguntar(frase, ms = 12000) {
 export async function entender(frase, { avatar, preguntarA = preguntar } = {}) {
   if (!String(frase || '').trim()) return null;
   try { return aEscenario(await preguntarA(frase), { avatar }); } catch { return null; }
+}
+
+// Ideas que no se repiten: la IA recibe un tema al azar (nunca texto del niño) y propone un escenario del catálogo.
+// Con temperatura > 0 cada vez sale algo distinto; todo se valida con aEscenario y se descartan los lugares a evitar.
+export const TEMAS = [
+  'un sitio con mucha agua y animales', 'un lugar de España precioso', 'una aventura muy fría', 'algo con mucho calor y arena',
+  'un sitio mágico de noche con estrellas', 'una ciudad famosa del mundo', 'un bosque con animales del bosque', 'un sitio para bucear',
+  'una montaña muy alta', 'un lugar con música y fiesta', 'un sitio con dinosaurios o animales grandes', 'un lugar escondido y misterioso',
+  'una isla tranquila', 'un viaje al espacio', 'una granja con animales', 'un lugar con nieve y renos',
+];
+export async function idear({ avatar, evitar = [], cuantas = 2, azar = Math.random, preguntarA = (f) => preguntar(f, 12000, 0.9) } = {}) {
+  const temas = [...TEMAS].sort(() => azar() - 0.5).slice(0, cuantas + 2);
+  const ideas = [];
+  for (const tema of temas) {
+    if (ideas.length >= cuantas) break;
+    try {
+      const e = aEscenario(await preguntarA(tema), { avatar });
+      if (e && !evitar.includes(e.ambiente) && !ideas.some((x) => x.ambiente === e.ambiente)) ideas.push({ ...e, tema });
+    } catch {}
+  }
+  return ideas;
 }
 
 export function pararIA() {

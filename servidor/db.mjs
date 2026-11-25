@@ -5,6 +5,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { createHash, randomBytes, randomInt, randomUUID } from 'node:crypto';
 import { prepararTablaPlanta } from './planta.mjs';
+import { prepararTablaRecompensas } from './recompensas.mjs';
 import { construirEscenario } from '../web/lib/escenario.js';
 
 const DIA = 24 * 60 * 60 * 1000;
@@ -117,6 +118,7 @@ export function abrirDB(ruta = ':memory:') {
   anadir('mensajes', [['escena', 'TEXT'], ['intentos', 'INTEGER NOT NULL DEFAULT 0']]);
   // Comunidad de la planta: mensajes entre niños de la misma caja (servidor/planta.mjs).
   prepararTablaPlanta(db);
+  prepararTablaRecompensas(db);
   return crearRepositorio(db);
 }
 

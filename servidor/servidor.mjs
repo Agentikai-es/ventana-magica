@@ -15,9 +15,10 @@ import { createHash } from 'node:crypto';
 import { abrirDB, hash, ROLES, EMOJIS_REACCION, PIEZAS_PUZLE } from './db.mjs';
 import { crearPlanta, ANIMOS } from './planta.mjs';
 import { crearJuego } from './juego.mjs';
+import { crearRecompensas } from './recompensas.mjs';
 import { transcribir, vozDisponible, calentar, ejecutar, FFMPEG, ffmpegDisponible } from './voz.mjs';
 import { construirEscenario, interpretar } from '../web/lib/escenario.js';
-import { entender, iaDisponible, calentarIA, pararIA } from './ia.mjs';
+import { entender, idear, iaDisponible, calentarIA, pararIA } from './ia.mjs';
 import { hablar, hablaDisponible, MAX_TEXTO } from './habla.mjs';
 import { AVATARES } from '../web/lib/catalogo.js';
 
@@ -103,6 +104,9 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
   const repo = abrirDB(join(datos, 'ventana.db'));
   const juego = crearJuego(repo);
   const planta = crearPlanta(repo);
+  // «En línea» = tiene la ventana abierta ahora mismo (canal de tiempo real), solo dentro de la caja.
+  const enLinea = (espacioId) => (canales.get(`${espacioId}:ventana`)?.size || 0) > 0;
+  const recompensas = crearRecompensas(repo, { enLinea });
 
   // Clave del panel del hospital: se genera la primera vez y solo se guarda su hash.
   const rutaAdmin = join(datos, 'admin.json');
@@ -110,6 +114,7 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
   let claveNueva = null;
   // Modo demo: clave del panel fija («123456») y espacio de Leo con códigos fijos. Nunca con niños reales.
   const infoDemo = demo ? repo.asegurarDemo() : null;
+  if (infoDemo) recompensas.sembrarDemo(infoDemo.espacios);
   // En una demo pública (Render) la clave del panel viene de VP_CLAVE_PANEL, nunca la fácil.
   if (demo && !claveAdmin) claveAdmin = process.env.VP_CLAVE_PANEL || '123456';
   if (claveAdmin) hashAdmin = hash(claveAdmin);
@@ -174,6 +179,7 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
     reinicio = setInterval(async () => {
       for (const id of infoDemo.espacios) await borrarArchivos(repo.borrarAportes(id, 'reinicio-demo'));
       repo.asegurarDemo();
+      recompensas.reiniciarDemo(infoDemo.espacios);
     }, reinicioHoras * HORA);
     reinicio.unref();
   }
@@ -222,11 +228,13 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
     }
   }
 
-  // Vídeo corto (≤ 20 s): se re-empaqueta sin recodificar (rápido incluso en una Raspberry Pi) y sin metadatos.
-  // Si el formato no cabe en MP4, se recodifica a 480p. El fotograma sirve de puzle.
+  // Vídeo corto (≤ 20 s) o GIF animado: se re-empaqueta sin recodificar si se puede (rápido incluso en una Raspberry Pi)
+  // y sin metadatos. Si el formato no cabe en MP4 (WebM, GIF…), se recodifica a 480p.
+  // El ÚLTIMO fotograma es la foto del puzle: el vídeo «termina en foto».
   async function leerVideo(req) {
-    if (!/^video\//.test(req.headers['content-type'] || '')) throw new ErrorHttp(415, 'formato');
+    if (!esVideoOGif(req)) throw new ErrorHttp(415, 'formato');
     if (!ffmpegDisponible()) throw new ErrorHttp(503, 'sin_ffmpeg');
+    const esGif = /^image\/gif/.test(req.headers['content-type'] || '');
     const datosVideo = await leerCuerpo(req, 40 * 1024 * 1024);
     const tmp = await mkdtemp(join(tmpdir(), 'vp-video-'));
     const base = randomUUID();
@@ -234,12 +242,16 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
     const ff = (args) => ejecutar(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', ...args], 120000);
     try {
       await writeFile(f('original'), datosVideo, { mode: 0o600 });
-      try {
-        await ff(['-i', f('original'), '-t', '20', '-map_metadata', '-1', '-c', 'copy', '-movflags', '+faststart', f('v.mp4')]);
-      } catch {
-        await ff(['-i', f('original'), '-t', '20', '-map_metadata', '-1', '-vf', "scale='min(854,iw)':-2", '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28', '-c:a', 'aac', '-b:a', '64k', '-movflags', '+faststart', f('v.mp4')]);
+      const recodificar = () => ff(['-i', f('original'), '-t', '20', '-map_metadata', '-1', '-vf', "scale='min(854,iw)':-2:flags=lanczos,format=yuv420p",
+        '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28', '-c:a', 'aac', '-b:a', '64k', '-movflags', '+faststart', f('v.mp4')]);
+      if (esGif) await recodificar();
+      else {
+        try { await ff(['-i', f('original'), '-t', '20', '-map_metadata', '-1', '-c', 'copy', '-movflags', '+faststart', f('v.mp4')]); } catch { await recodificar(); }
       }
-      await ff(['-ss', '0.5', '-i', f('v.mp4'), '-map_metadata', '-1', '-frames:v', '1', '-vf', "scale='min(1280,iw)':-2", '-q:v', '4', f('p.jpg')]);
+      // Último fotograma (el final del vídeo es la foto del puzle). Si el clip es muy corto, el primero.
+      const foto = ['-map_metadata', '-1', '-vf', "scale='min(1280,iw)':-2", '-q:v', '4'];
+      try { await ff(['-sseof', '-0.5', '-i', f('v.mp4'), ...foto, '-update', '1', f('p.jpg')]); await readFile(f('p.jpg')); }
+      catch { await ff(['-i', f('v.mp4'), ...foto, '-frames:v', '1', f('p.jpg')]); }
       await writeFile(join(FOTOS, `${base}.mp4`), await readFile(f('v.mp4')), { mode: 0o600 });
       await writeFile(join(FOTOS, `${base}.jpg`), await readFile(f('p.jpg')), { mode: 0o600 });
       return { video: `${base}.mp4`, archivo: `${base}.jpg` };
@@ -249,6 +261,8 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
       await rm(tmp, { recursive: true, force: true });
     }
   }
+
+  const esVideoOGif = (req) => /^(video\/|image\/gif)/.test(req.headers['content-type'] || '');
 
   async function leerFoto(req) {
     const tipo = (req.headers['content-type'] || '').split(';')[0];
@@ -279,7 +293,9 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
       alias: e.alias, avatar: e.avatar, escena: e.escena ? JSON.parse(e.escena) : null, fotos, lado: e.lado || 3,
       puzle: { total: PIEZAS_PUZLE, hechas, mensaje: hechas >= PIEZAS_PUZLE ? e.mensaje_puzle : null },
       voz: vozDisponible(), habla: hablaDisponible(), ia: iaDisponible(), emojis: EMOJIS_REACCION, chats: juego.chatsNino(espacioId),
-      comunidad: !!e.comunidad, planta: planta.conversaciones(espacioId), animos: ANIMOS,
+      comunidad: !!e.comunidad, animos: ANIMOS, recompensas: recompensas.resumen(espacioId),
+      planta: planta.conversaciones(espacioId).map((v) => ({ ...v, enLinea: enLinea(v.id),
+        mensajes: v.mensajes.map((x) => (!x.mio && x.juego === 'resuelto' ? { ...x, regalado: recompensas.regalado(espacioId, x.id) } : x)) })),
     };
   }
 
@@ -361,8 +377,12 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
           ? planta.adivinarPostal(a.espacio_id, mPl[1], String((await leerJSON(req)).donde ?? ''))
           : planta.puzleResuelto(a.espacio_id, mPl[1]);
         if (!r) throw new ErrorHttp(404, 'no_existe');
-        if (r.mensaje.juego === 'resuelto') avisar(r.de, 'ventana', 'planta', { de: repo.espacio(a.espacio_id).alias, resuelto: mPl[2] });
-        return json(res, 200, { acierto: r.acierto, mensaje: r.mensaje });
+        let estrellas = null;
+        if (r.mensaje.juego === 'resuelto') {
+          avisar(r.de, 'ventana', 'planta', { de: repo.espacio(a.espacio_id).alias, resuelto: mPl[2] });
+          estrellas = recompensas.ganar(a.espacio_id, 'amigo', mPl[1]);
+        }
+        return json(res, 200, { acierto: r.acierto, mensaje: r.mensaje, estrellas });
       }
       // Ir de visita al mundo de otro niño: tu ventana se pone igual que la suya, con tu avatar.
       const mVis = ruta.match(/^\/api\/ventana\/visitar\/([\w-]+)$/);
@@ -375,6 +395,29 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
         repo.guardarEscena(a.espacio_id, esc);
         avisar(mVis[1], 'ventana', 'planta', { de: repo.espacio(a.espacio_id).alias, visita: true });
         return json(res, 200, esc);
+      }
+      // ----- Recompensas: estrellas, flores y Jardín de los recuerdos -----
+      if (ruta === '/api/ventana/jardin' && m === 'GET') return json(res, 200, recompensas.jardin(a.espacio_id));
+      if (ruta === '/api/ventana/flor' && m === 'POST') {
+        limitar(`flor:${a.id}`, 20, HORA);
+        const { tipo, color } = await leerJSON(req);
+        const r = recompensas.plantar(a.espacio_id, String(tipo ?? ''), String(color ?? ''));
+        if (!r.ok) throw new ErrorHttp(400, r.error);
+        const alias = repo.espacio(a.espacio_id).alias;
+        for (const v of planta.vecinos(a.espacio_id)) avisar(v.id, 'ventana', 'jardin', { de: alias, tipo: r.flor.tipo });
+        return json(res, 200, r);
+      }
+      // Regalo de reconocimiento: solo a quien te mandó una postal o un puzle que ya has resuelto.
+      if (ruta === '/api/ventana/regalo' && m === 'POST') {
+        limitar(`regalo:${a.id}`, 30, HORA);
+        const { mensajeId } = await leerJSON(req);
+        const msg = planta.mensaje(String(mensajeId ?? ''));
+        if (!msg || msg.a_espacio !== a.espacio_id || msg.estado !== 'aprobado' || msg.juego !== 'resuelto' || !['postal', 'puzle'].includes(msg.tipo)) throw new ErrorHttp(404, 'no_existe');
+        if (!planta.esVecino(a.espacio_id, msg.de_espacio)) throw new ErrorHttp(400, 'para');
+        const r = recompensas.regalar(a.espacio_id, msg.de_espacio, msg.id);
+        if (!r.ok) throw new ErrorHttp(400, r.error);
+        avisar(msg.de_espacio, 'ventana', 'regalo', { de: repo.espacio(a.espacio_id).alias, tipo: msg.tipo, estrellas: r.ganadas });
+        return json(res, 200, { ok: true, ganadas: r.ganadas });
       }
       if (ruta === '/api/ventana/reaccion' && m === 'POST') {
         const { aporteId, emoji } = await leerJSON(req);
@@ -393,6 +436,8 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
         const { quien, donde } = await leerJSON(req);
         const r = juego.adivinar(a.espacio_id, mFoto[1], { quien: String(quien ?? ''), donde: String(donde ?? '') });
         if (!r) throw new ErrorHttp(404, 'no_existe');
+        // Carta de la familia resuelta (puzle + acertijo): 1 estrella, una sola vez.
+        if (r.foto.juego === 'descubierto') r.estrellas = recompensas.ganar(a.espacio_id, 'familia', mFoto[1]);
         return json(res, 200, r);
       }
       // El niño escribe, graba o fotografía algo para una persona de fuera (lo aprueba el adulto antes de salir).
@@ -448,6 +493,18 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
       const trabajo = colaVoz.then(() => entender(frase, { avatar: repo.espacio(av.espacio_id).avatar }));
       colaVoz = trabajo.catch(() => {});
       return json(res, 200, { escenario: await trabajo });
+    }
+
+    // Ideas con la IA local: temas al azar → escenarios del catálogo, distintos cada vez. Nada del niño entra en el modelo.
+    if (ruta === '/api/ia/ideas' && m === 'POST') {
+      const av = acceso(req, 'ventana');
+      limitar(`ideas:${av.id}`, 20);
+      if (!iaDisponible()) return json(res, 200, { ideas: [] });
+      const { evitar } = await leerJSON(req);
+      const lista = (Array.isArray(evitar) ? evitar : []).map(String).slice(0, 40);
+      const trabajo = colaVoz.then(() => idear({ avatar: repo.espacio(av.espacio_id).avatar, evitar: lista }));
+      colaVoz = trabajo.catch(() => {});
+      return json(res, 200, { ideas: await trabajo });
     }
 
     // Voz que sale: Piper lee la narración dentro de la caja. Solo texto (lo genera la propia ventana), nunca audio del niño.
@@ -538,7 +595,7 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
         // Carta programada: llega dentro de N días (0 = en cuanto se apruebe). Para dejar sorpresas en una visita.
         const dias = Math.min(Math.max(parseInt(req.headers['x-dias'], 10) || 0, 0), 14);
         const entregarEn = dias ? Date.now() + dias * 24 * HORA : null;
-        const esVideo = /^video\//.test(req.headers['content-type'] || '');
+        const esVideo = esVideoOGif(req);
         const { archivo, video } = esVideo ? await leerVideo(req) : { archivo: await leerFoto(req), video: null };
         const ap = repo.crearAporte(a.espacio_id, { accesoId: a.id, autor: a.etiqueta, tipo: 'foto', texto, archivo, video, estado: 'pendiente', pistas, lugar, entregarEn });
         avisar(a.espacio_id, 'tutor', 'pendiente');
@@ -608,7 +665,7 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
           'Content-Type': 'application/json; charset=utf-8',
           'Content-Disposition': 'attachment; filename="ventana-magica-datos.json"',
         });
-        return res.end(JSON.stringify(repo.exportar(a.espacio_id), null, 2));
+        return res.end(JSON.stringify({ ...repo.exportar(a.espacio_id), recompensas: recompensas.exportar(a.espacio_id) }, null, 2));
       }
     }
 
@@ -828,10 +885,12 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
 // ---------- Arranque ----------
 if (process.argv[1] && fileURLToPath(import.meta.url) === normalize(process.argv[1])) {
   // En la nube (Render): un solo servidor HTTP en el puerto que dan; el HTTPS lo pone Render.
+  // En un VPS: detrás de Apache (VP_HOST=127.0.0.1, VP_URL_PUBLICA=https://tu-dominio); Apache pone el HTTPS con Let's Encrypt.
   if (process.env.PORT) {
-    const app = await crearApp({ proxy: true, urlsWifi: process.env.RENDER_EXTERNAL_URL ? [process.env.RENDER_EXTERNAL_URL] : [] });
-    crearHttp(app.manejar).listen(Number(process.env.PORT), '0.0.0.0', () => {
-      console.log(`Ventana Mágica · demo en la nube en el puerto ${process.env.PORT} · voz: ${vozDisponible() ? 'sí' : 'no (texto y lugares)'} · ffmpeg: ${ffmpegDisponible() ? 'sí' : 'NO'}`);
+    const publica = process.env.VP_URL_PUBLICA || process.env.RENDER_EXTERNAL_URL;
+    const app = await crearApp({ proxy: true, urlsWifi: publica ? [publica] : [] });
+    crearHttp(app.manejar).listen(Number(process.env.PORT), process.env.VP_HOST || '0.0.0.0', () => {
+      console.log(`Ventana Mágica · servidor en internet (detrás de proxy) en ${process.env.VP_HOST || '0.0.0.0'}:${process.env.PORT} · voz: ${vozDisponible() ? 'sí' : 'no (texto y lugares)'} · ffmpeg: ${ffmpegDisponible() ? 'sí' : 'NO'}`);
       if (app.infoDemo) console.log(`  Modo demo · códigos: ${app.infoDemo.codigos.map((c) => c.codigo).join(', ')}`);
     });
   } else {

@@ -14,6 +14,20 @@ Día 3 (26 nov)
 - [ ] Congelar el código a mediodía; solo arreglos.
 - [ ] Probar en la wifi del recinto y tener el vídeo de respaldo abierto.
 
+Recompensas (25 nov, hecho en local, sin commit)
+- [x] Estrellas (1 familia, 2 amigo), regalo de 2 ★, flor a elegir con animación, Jardín de los recuerdos local con metas comunes. `servidor/recompensas.mjs`, `web/jardin.js`, `web/flores.js`.
+- [x] Más lugares (37), vida de fondo y sonidos nuevos en la escena, ideas variables con la IA local.
+- [x] Diagrama de funcionamiento: `docs/diagrama-funcionamiento.pdf` (fuente `.html`, se regenera con `bash scripts/diagrama-pdf.sh`).
+- [ ] Probar las ideas con IA en la Pi real (en el Mac solo está el modelo de 0,5B, que no se usa).
+- [ ] Fase 2 (federación entre hospitales y acceso tras el alta): solo diseño, ver SPEC.md.
+
+VPS + Apache (25 nov, indicación de los mentores; hecho en local, sin desplegar)
+- [x] Vídeo o GIF de la familia: se pasa a MP4 sin metadatos y su último fotograma es el puzle.
+- [x] Montaje en VPS: `scripts/instalar-vps.sh` (Node 22, ffmpeg, Apache, Let's Encrypt, systemd) y `deploy/apache-ventana.conf`. Probado con Apache en el Mac: subida, aviso en tiempo real y aprobación a través del proxy.
+- [x] Guía para explicarlo: `docs/arquitectura.md`.
+- [ ] Jamin: contratar el VPS (UE) y el dominio con su cuenta, y dar el OK para desplegar.
+- [ ] Fase 2: caja en la planta + VPS solo como buzón (solo diseño).
+
 ## Product & Pitch · ChicaLobby
 Día 2
 - [ ] Guion de la demo en 3 minutos (orden: voz → paisaje; aporte → pieza; cuento).
@@ -23,6 +37,8 @@ Día 2
 Día 3
 - [ ] Deck: problema → solución → demo en vivo → impacto → evals → siguientes pasos.
 - [ ] Ensayar el pitch 2 veces, cronometrado.
+
+- [ ] Guion: añadir 30 s de recompensas (Leo resuelve la postal de Sara → +2 ★ → planta su flor → le regala 2 ★). Leo empieza la demo con 8 ★.
 
 ## Product & Pitch · David
 Día 2

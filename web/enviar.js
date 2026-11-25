@@ -38,7 +38,14 @@ $('archivo').onchange = async () => {
   if (!f) return;
   $('mensaje').textContent = '';
   try {
-    if (f.type.startsWith('video/')) {
+    if (f.type === 'image/gif') {
+      // GIF animado: viaja tal cual; el servidor lo pasa a vídeo y su último fotograma será el puzle.
+      if (f.size > 40 * 1024 * 1024) throw new Error('El vídeo es demasiado grande. Prueba con uno más corto (hasta 20 segundos).');
+      archivo = { blob: f, tipo: 'image/gif' };
+      const img = Object.assign(document.createElement('img'), { src: URL.createObjectURL(f), alt: 'Vista previa de tu GIF' });
+      const nota = Object.assign(document.createElement('p'), { className: 'duracion', textContent: 'GIF animado: la última imagen será el puzle.' });
+      $('previa').replaceChildren(img, nota);
+    } else if (f.type.startsWith('video/')) {
       if (f.size > 40 * 1024 * 1024) throw new Error('El vídeo es demasiado grande. Prueba con uno más corto (hasta 20 segundos).');
       const v = Object.assign(document.createElement('video'), { src: URL.createObjectURL(f), controls: true, playsInline: true, muted: true });
       archivo = { blob: f, tipo: f.type };
@@ -69,7 +76,7 @@ $('archivo').onchange = async () => {
 $('enviar').onclick = async () => {
   if (!archivo) return;
   $('enviar').disabled = true;
-  $('mensaje').textContent = archivo.tipo.startsWith('video/') ? 'Mandando el vídeo… (puede tardar un poco)' : 'Mandando…';
+  $('mensaje').textContent = /^(video\/|image\/gif)/.test(archivo.tipo) ? 'Mandando el vídeo… (puede tardar un poco)' : 'Mandando…';
   const pistas = ['pista1', 'pista2', 'pista3'].map((id) => $(id).value.trim()).filter(Boolean);
   try {
     await api('/api/enviar', { metodo: 'POST', cuerpo: archivo.blob, tipo: archivo.tipo, cabeceras: {

@@ -22,7 +22,7 @@ function asegurar() {
 }
 
 // Primer toque en cualquier sitio: se desbloquea el audio y suena el paisaje pendiente.
-addEventListener('pointerdown', () => { if (asegurar() && pedido) paisaje(pedido.sonido, pedido.clima); }, { once: true, capture: true });
+addEventListener('pointerdown', () => { if (asegurar() && pedido) paisaje(pedido.sonido, pedido.clima, pedido.momento); }, { once: true, capture: true });
 
 function ruido(segundos = 2) {
   const b = ctx.createBuffer(1, ctx.sampleRate * segundos, ctx.sampleRate);
@@ -93,11 +93,15 @@ function nota(salida, freq, { dur = 0.4, vol = 0.12, tipo = 'sine', cuando = 0, 
 
 const pajaro = (s) => { const f = 2200 + Math.random() * 1600; for (let i = 0; i < 3; i++) nota(s, f, { dur: 0.09, vol: 0.05, cuando: i * 0.12, desliz: 1.35 }); };
 const campana = (s) => { const f = [523, 659, 784][Math.floor(Math.random() * 3)]; nota(s, f, { dur: 2.5, vol: 0.06 }); nota(s, f * 2.01, { dur: 1.6, vol: 0.02 }); };
+const gota = (s) => nota(s, 1400 + Math.random() * 900, { dur: 0.18, vol: 0.05, desliz: 0.55 });
+const gaviota = (s) => { const f = 1300 + Math.random() * 300; nota(s, f, { dur: 0.35, vol: 0.03, tipo: 'triangle', desliz: 0.7 }); nota(s, f * 0.95, { dur: 0.3, vol: 0.025, tipo: 'triangle', desliz: 0.7, cuando: 0.4 }); };
+const grillo = (s) => { const f = 4200 + Math.random() * 400; for (let i = 0; i < 4; i++) nota(s, f, { dur: 0.04, vol: 0.018, tipo: 'square', cuando: i * 0.07 }); };
+const rasgueo = (s) => { const base = [196, 220, 247, 262][Math.floor(Math.random() * 4)]; [1, 1.26, 1.5, 2].forEach((m, i) => nota(s, base * m, { dur: 1.2, vol: 0.03, tipo: 'triangle', cuando: i * 0.05 })); };
 const acordeon = (s) => { const base = [262, 330, 392, 349, 294][Math.floor(Math.random() * 5)]; [1, 1.25, 1.5].forEach((m, i) => nota(s, base * m, { dur: 0.5, vol: 0.025, tipo: 'sawtooth', cuando: i * 0.18 })); };
 
 // Paisajes por escenario ----------------------------------------------------
 const PAISAJES = {
-  olas: (s) => [...capaRuido(s, { freq: 500, vol: 0.18, lfo: 0.12, lfoProf: 0.12 }), cadaTanto(() => pajaro(s), 6000, 14000)],
+  olas: (s) => [...capaRuido(s, { freq: 500, vol: 0.18, lfo: 0.12, lfoProf: 0.12 }), cadaTanto(() => gaviota(s), 7000, 15000)],
   nana: (s) => [...capaRuido(s, { freq: 380, vol: 0.14, lfo: 0.09, lfoProf: 0.1 }), ...capaAcorde(s, [196, 247, 294])],
   campanas: (s) => [...capaAcorde(s, [262, 330, 392], { vol: 0.025 }), cadaTanto(() => campana(s), 4000, 9000)],
   cosmos: (s) => capaAcorde(s, [110, 165, 220, 330], { vol: 0.03 }),
@@ -106,6 +110,10 @@ const PAISAJES = {
   viento: (s) => capaRuido(s, { tipo: 'bandpass', freq: 700, q: 1.5, vol: 0.12, lfo: 0.08, lfoProf: 400, lfoFreq: true }),
   desierto: (s) => [...capaRuido(s, { tipo: 'bandpass', freq: 500, q: 1.2, vol: 0.08, lfo: 0.06, lfoProf: 250, lfoFreq: true }), ...capaAcorde(s, [147, 220], { vol: 0.025, tipo: 'triangle' })],
   ciudad: (s) => [...capaRuido(s, { freq: 300, vol: 0.06 }), ...capaAcorde(s, [349, 440, 523], { vol: 0.02 })],
+  rio: (s) => [...capaRuido(s, { tipo: 'bandpass', freq: 1100, q: 0.6, vol: 0.09, lfo: 0.3, lfoProf: 0.02 }), cadaTanto(() => pajaro(s), 2500, 7000)],
+  guitarra: (s) => [...capaRuido(s, { freq: 350, vol: 0.03 }), cadaTanto(() => rasgueo(s), 3000, 6000)],
+  cueva: (s) => [...capaAcorde(s, [98, 147], { vol: 0.025 }), cadaTanto(() => gota(s), 1200, 3500)],
+  burbujeo: (s) => [...capaRuido(s, { freq: 320, vol: 0.12, lfo: 0.1, lfoProf: 0.06 }), cadaTanto(() => nota(s, 400 + Math.random() * 500, { dur: 0.12, vol: 0.04, desliz: 1.9 }), 700, 2200)],
   acordeon: (s) => [...capaRuido(s, { freq: 400, vol: 0.03 }), cadaTanto(() => acordeon(s), 2500, 5000)],
 };
 const CLIMAS = {
@@ -120,8 +128,10 @@ function parar(nodos) {
 }
 
 // Cambia el paisaje sonoro con un fundido suave.
-export function paisaje(sonido, clima) {
-  pedido = { sonido, clima };
+// De noche, fuera, se oyen grillos.
+const NOCHE_DENTRO = ['cosmos', 'nana', 'cueva', 'burbujeo'];
+export function paisaje(sonido, clima, momento) {
+  pedido = { sonido, clima, momento };
   if (!asegurar() || ctx.state !== 'running') return;
   const viejo = ambiente;
   if (viejo) {
@@ -130,6 +140,7 @@ export function paisaje(sonido, clima) {
   }
   const salida = gananciaLenta(maestro, 1);
   const nodos = [...(PAISAJES[sonido]?.(salida) || []), ...(CLIMAS[clima]?.(salida) || [])];
+  if (momento === 'noche' && !NOCHE_DENTRO.includes(sonido)) nodos.push(cadaTanto(() => grillo(salida), 900, 2600));
   ambiente = { salida, nodos };
 }
 
@@ -143,6 +154,9 @@ const EFECTOS = {
   llega: (s) => [880, 1319].forEach((f, i) => nota(s, f, { dur: 0.9, vol: 0.08, cuando: i * 0.13 })),
   envio: (s) => nota(s, 400, { dur: 0.45, vol: 0.07, desliz: 3, tipo: 'sine' }),
   magia: (s) => [784, 988, 1175, 1568].forEach((f, i) => nota(s, f, { dur: 0.6, vol: 0.05, cuando: i * 0.06 })),
+  estrella: (s) => [1047, 1319, 1568, 2093].forEach((f, i) => nota(s, f, { dur: 0.35, vol: 0.06, tipo: 'triangle', cuando: i * 0.07 })),
+  regalo: (s) => { [659, 784, 988].forEach((f, i) => nota(s, f, { dur: 0.3, vol: 0.07, tipo: 'triangle', cuando: i * 0.1 })); nota(s, 1319, { dur: 0.9, vol: 0.05, cuando: 0.32 }); },
+  crece: (s) => { nota(s, 220, { dur: 1.6, vol: 0.06, desliz: 2.5 }); [523, 659, 784, 1047].forEach((f, i) => nota(s, f, { dur: 0.7, vol: 0.05, tipo: 'triangle', cuando: 1.1 + i * 0.12 })); },
 };
 
 export function efecto(nombre) {
@@ -156,6 +170,6 @@ export function alternarSonido() {
   activo = !activo;
   localStorage.setItem('vp-sonido', activo ? 'si' : 'no');
   if (asegurar()) maestro.gain.linearRampToValueAtTime(activo ? 0.9 : 0, ctx.currentTime + 0.4);
-  if (activo && pedido) paisaje(pedido.sonido, pedido.clima);
+  if (activo && pedido) paisaje(pedido.sonido, pedido.clima, pedido.momento);
   return activo;
 }

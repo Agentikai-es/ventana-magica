@@ -208,6 +208,9 @@ test('juego: montar el puzle abre el acertijo con pistas y opciones', async () =
   assert.equal(bien.foto.juego, 'descubierto');
   assert.equal(bien.foto.autor, 'Familia');
   assert.equal(bien.foto.lugar, 'desde el parque');
+  assert.equal(bien.estrellas.ganadas, 1, 'carta de la familia resuelta = 1 estrella');
+  const otraVez = await (await pedir(`/api/ventana/foto/${id}/adivinar`, { cookie: galletas.ventana, metodo: 'POST', cuerpo: { quien: 'familia', donde: 'Desde el parque' } })).json();
+  assert.equal(otraVez.estrellas.ganadas, 0, 'la misma carta no da estrellas dos veces');
   const est = await (await pedir('/api/ventana', { cookie: galletas.ventana })).json();
   assert.equal(est.puzle.hechas, 1);
 });
@@ -288,10 +291,11 @@ test('postal del niño: quien la recibe adivina dónde está hoy para desbloquea
   assert.equal(ok.mensaje.escena.ambiente, 'castillo');
 });
 
-test('vídeo de la familia: se limpia, el puzle usa un fotograma y el vídeo se ve al descubrirlo', async () => {
+test('vídeo o GIF de la familia: se limpia, el puzle usa el último fotograma y el vídeo se ve al descubrirlo', async () => {
   for (const [nombre, args, tipo] of [
     ['clip.mp4', ['-c:v', 'libx264', '-pix_fmt', 'yuv420p'], 'video/mp4'],
     ['clip.webm', ['-c:v', 'libvpx'], 'video/webm'], // VP8 no cabe en MP4: obliga a recodificar
+    ['clip.gif', [], 'image/gif'], // GIF animado: se convierte a MP4 y su último fotograma es el puzle
   ]) {
     const f = join(dir, nombre);
     execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc=size=320x240:rate=10:duration=1', '-metadata', 'location=+41.65-000.88/', ...args, f]);

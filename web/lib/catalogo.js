@@ -251,6 +251,31 @@ Object.assign(AMBIENTES, {
     objetos: ['globo', 'bandera', 'sol'], sonido: 'campanas', papel: 'quien cruza el puente de piedra sobre el Ebro', avatar: 'zorrito' },
 });
 
+// Más lugares (25 nov): rincones de España y de la naturaleza, cada uno con su sonido.
+Object.assign(AMBIENTES, {
+  ordesa: { nombre: 'Valle de Ordesa', base: 'bosque', monumento: '🏔️', paleta: ['#a5d6a7', '#e1f5fe'],
+    sinonimos: ['ordesa', 'huesca', 'valle', 'cascada', 'cascadas', 'rio', 'monte perdido'], personajes: ['ciervo', 'castor', 'cabra_montes'],
+    objetos: ['pino', 'mariposa', 'hoja_arce'], sonido: 'rio', papel: 'quien encuentra la cascada escondida del valle', avatar: 'osito' },
+  canarias: { nombre: 'Volcán de Canarias', base: 'playa', monumento: '🌋', paleta: ['#ffab91', '#80deea'],
+    sinonimos: ['canarias', 'tenerife', 'teide', 'volcan', 'volcanes', 'lanzarote', 'gran canaria'], personajes: ['delfin', 'loro', 'cangrejo_bailarin'],
+    objetos: ['sol', 'palmera', 'concha'], sonido: 'olas', papel: 'quien sube al volcán dormido a ver el mar de nubes', avatar: 'zorrito' },
+  granada: { nombre: 'La Alhambra de Granada', base: 'llanura', monumento: '🏰', paleta: ['#ffcc80', '#f8bbd0'],
+    sinonimos: ['granada', 'alhambra', 'andalucia', 'sevilla', 'cordoba'], personajes: ['gatito', 'paloma', 'pintora'],
+    objetos: ['fuente', 'farol', 'flor'], sonido: 'guitarra', papel: 'quien descubre el patio de los leones al atardecer', avatar: 'gatita' },
+  barcelona: { nombre: 'Barcelona junto al mar', base: 'playa', monumento: '⛪', paleta: ['#ffe082', '#81d4fa'],
+    sinonimos: ['barcelona', 'cataluna', 'catalunya', 'sagrada familia'], personajes: ['paloma', 'delfin', 'gatito'],
+    objetos: ['helado', 'velero', 'sol'], sonido: 'olas', papel: 'quien pasea entre torres de cuento y el mar', avatar: 'superheroe' },
+  arrecife: { nombre: 'Arrecife de Coral', base: 'mar', monumento: '🪸', paleta: ['#4dd0e1', '#00695c'],
+    sinonimos: ['arrecife', 'coral', 'corales', 'fondo del mar', 'bucear', 'buceo', 'buzo'], personajes: ['pez_naranja', 'tortuga_sabia', 'pulpo'],
+    objetos: ['burbujas', 'concha', 'estrella'], sonido: 'burbujeo', papel: 'quien bucea entre corales de colores', avatar: 'pinguino' },
+  cueva: { nombre: 'Cueva de los Cristales', base: 'montana', monumento: '💎', paleta: ['#5e35b1', '#80cbc4'],
+    sinonimos: ['cueva', 'cuevas', 'cristales', 'cristal', 'gruta', 'mina', 'gemas'], personajes: ['raton_aventurero', 'buho', 'criatura_chispa'],
+    objetos: ['farol', 'llave', 'estrella'], sonido: 'cueva', papel: 'quien ilumina la cueva con su farol mágico', avatar: 'mago' },
+  galapagos: { nombre: 'Islas de las Tortugas Gigantes', base: 'playa', monumento: '🐢', paleta: ['#c5e1a5', '#4fc3f7'],
+    sinonimos: ['galapagos', 'tortugas gigantes', 'islas de las tortugas'], personajes: ['tortuga_sabia', 'flamenco', 'foca'],
+    objetos: ['sol', 'cactus', 'concha'], sonido: 'olas', papel: 'quien da de comer a la tortuga más vieja del mundo', avatar: 'zorrito' },
+});
+
 Object.assign(PERSONAJES, {
   panda: { nombre: 'Panda Dormilón', emoji: '🐼', casa: 'china', sinonimos: ['panda', 'pandas', 'oso panda'] },
   delfin: { nombre: 'Delfín Saltarín', emoji: '🐬', casa: 'grecia', sinonimos: ['delfin', 'delfines'] },

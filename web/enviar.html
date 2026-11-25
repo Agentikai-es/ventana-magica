@@ -25,7 +25,7 @@
     .previa { display: grid; place-items: center; }
     .previa .duracion { margin: .5rem 0 0; font-size: .95rem; opacity: .85; }
     .previa .duracion.largo { color: var(--acento); opacity: 1; font-weight: 600; }
-    .previa canvas, .previa video { max-width: 100%; max-height: 46vh; border-radius: 16px; box-shadow: 0 10px 30px #0006; }
+    .previa canvas, .previa video, .previa img { max-width: 100%; max-height: 46vh; border-radius: 16px; box-shadow: 0 10px 30px #0006; }
     label.bloque { display: block; }
     .pistas-form { display: grid; gap: .5rem; }
     #enviar { font-size: 1.2rem; padding: 1rem; }
@@ -39,6 +39,10 @@
     #mensaje { margin: 0; font-weight: 600; }
     .privacidad { margin-top: 2.5rem; }
   </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icono.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icono-apple.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
 </head>
 <body>
 <main>
@@ -64,8 +68,8 @@
   <section class="tarjeta subir">
     <label class="elegir">
       <span data-icono="camara" style="font-size:2rem"></span>
-      <span>Elegir foto o vídeo</span>
-      <small>El perro, la comida, el patio del cole… (vídeos de hasta 20 segundos)</small>
+      <span>Elegir foto, vídeo o GIF</span>
+      <small>El perro, la comida, el patio del cole… (vídeos o GIF de hasta 20 segundos: la última imagen será el puzle)</small>
       <input type="file" id="archivo" accept="image/*,video/*">
     </label>
     <div class="previa oculto" id="previa"></div>

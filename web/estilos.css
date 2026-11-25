@@ -209,3 +209,141 @@ dialog.hoja::backdrop { background: #0b0e1ed9; backdrop-filter: blur(4px); }
   .revelado img, .revelado video { max-height: 60dvh; }
   .componer { gap: .4rem; padding-top: .5rem; }
 }
+
+/* ---------- Recompensas: estrellas, flores y Jardín de los recuerdos ---------- */
+.estrellas-boton { flex: none; gap: .3rem; padding: .35rem .85rem .35rem .65rem; background: linear-gradient(180deg, #3a3a6e, var(--noche-2)); color: #ffe08a; border: 2px solid #ffd54f55; font-weight: 800; font-size: 1.05rem; }
+.estrellas-boton .estrella-icono { font-size: 1.25rem; line-height: 1; filter: drop-shadow(0 0 6px #ffd54f88); }
+.estrellas-boton.lista { border-color: #ffd54f; box-shadow: 0 0 0 4px #ffd54f22; animation: brillar 2.4s ease-in-out infinite; }
+.estrellas-boton.brinca { animation: brinca .7s cubic-bezier(.2,.9,.3,1.6); }
+@keyframes brillar { 50% { box-shadow: 0 0 0 7px #ffd54f11, 0 0 22px #ffd54f55; } }
+@keyframes brinca { 30% { transform: scale(1.25) rotate(-6deg); } 60% { transform: scale(.95); } }
+.lluvia-estrellas { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
+.lluvia-estrellas span { position: absolute; top: 55%; color: #ffd54f; text-shadow: 0 0 12px #ffd54fcc; animation: estrella-sube 2.2s cubic-bezier(.2,.7,.3,1) both; }
+@keyframes estrella-sube { 0% { opacity: 0; transform: translateY(40px) scale(.4) rotate(0); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-55vh) scale(1.1) rotate(200deg); } }
+
+.tarjeta-estrellas { display: grid; gap: .7rem; background: linear-gradient(160deg, #2c2f63, var(--noche-2)); border: 1px solid #ffd54f33; border-radius: 22px; padding: 1rem; }
+.huecos { display: grid; grid-template-columns: repeat(10, 1fr); gap: .25rem; }
+.hueco { aspect-ratio: 1; display: grid; place-items: center; border-radius: 50%; background: #ffffff10; border: 2px dashed #ffffff26; }
+.hueco::before { content: "★"; color: #ffffff2a; font-size: clamp(.8rem, 3.4vw, 1.15rem); line-height: 1; }
+.hueco.llena { background: #ffd54f22; border: 2px solid #ffd54f88; animation: aparecer .4s ease both; }
+.hueco.llena::before { color: #ffd54f; text-shadow: 0 0 8px #ffd54f99; }
+.fila-jardin { display: flex; flex-wrap: wrap; gap: .5rem; }
+.fila-jardin button { flex: 1 1 10rem; }
+.como-ganar { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.como-ganar li { display: flex; align-items: center; gap: .6rem; background: var(--noche-2); border-radius: 14px; padding: .55rem .75rem; font-size: .95rem; }
+.como-ganar li > span:first-child { font-size: 1.3rem; }
+.como-ganar b { color: #ffe08a; white-space: nowrap; }
+
+.regalo { margin-top: .5rem; width: 100%; background: linear-gradient(90deg, #ffb86b, #ffd54f); color: var(--tinta); font-weight: 800; padding: .6rem 1rem; border: 0; }
+.regalo.dado { background: #e9f9ef; color: #2f7a4f; opacity: 1; }
+
+/* Jardín */
+.jardin-cuerpo { display: grid; gap: 1rem; }
+.jardin-escena { display: grid; gap: .4rem; }
+.jardin-vista { position: relative; aspect-ratio: 16 / 10; border-radius: 22px; overflow: hidden; box-shadow: 0 0 0 4px var(--marco), 0 12px 30px #0003; container-type: inline-size; }
+.j-cielo { position: absolute; inset: 0; background: linear-gradient(180deg, #8fd3f4 0%, #c7ecf7 55%, #fdf1d6 100%); }
+.j-sol { position: absolute; top: 9%; left: 10%; width: 11cqi; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, #fff6c2, #ffd54f 60%, #ffd54f00 72%); animation: latido-sol 6s ease-in-out infinite; }
+@keyframes latido-sol { 50% { transform: scale(1.08); } }
+.j-colina { position: absolute; left: -10%; right: -10%; border-radius: 50% 50% 0 0 / 100% 100% 0 0; }
+.j-colina-1 { bottom: 0; height: 66%; background: linear-gradient(180deg, #9ccc65, #7cb342); }
+.j-colina-2 { bottom: -12%; height: 52%; background: linear-gradient(180deg, #8bc34a, #558b2f); left: -20%; right: -20%; }
+.j-arcoiris { position: absolute; left: 30%; top: 2%; width: 60%; aspect-ratio: 2 / 1; border-radius: 50% 50% 0 0 / 100% 100% 0 0; opacity: .55;
+  background: radial-gradient(circle at 50% 100%, transparent 52%, #8e7cc3 52% 56%, #4fc3f7 56% 60%, #9ccc65 60% 64%, #ffd54f 64% 68%, #ff9a5a 68% 72%, #e5484d 72% 76%, transparent 76%); animation: aparecer 1.2s ease both; }
+.j-arbol { position: absolute; right: 4%; bottom: 30%; font-size: 18cqi; line-height: 1; filter: drop-shadow(0 6px 8px #0003); }
+.j-fuente { position: absolute; left: 46%; bottom: 33%; font-size: 9cqi; line-height: 1; transform: translateX(-50%); }
+.j-mariposa { position: absolute; left: 0; font-size: 4cqi; animation: mariposa calc(14s + var(--i) * 4s) linear infinite; animation-delay: calc(var(--i) * -5s); z-index: 70; }
+@keyframes mariposa { 0% { translate: -10cqi 0; } 25% { translate: 25cqi -4cqi; } 50% { translate: 55cqi 3cqi; } 75% { translate: 80cqi -3cqi; } 100% { translate: 110cqi 0; } }
+.j-luciernaga { position: absolute; width: 1.2cqi; aspect-ratio: 1; border-radius: 50%; background: #fff7a8; box-shadow: 0 0 2cqi #fff17a; animation: titilar 2.2s ease-in-out infinite, flotar 5s ease-in-out infinite; z-index: 70; }
+.flor { position: absolute; width: max(44px, calc(15cqi * var(--tam))); min-height: 44px; padding: 0; background: none; border-radius: 12px; transform: translateX(-50%); transform-origin: 50% 100%; display: flex; align-items: flex-end; justify-content: center; }
+.flor .flor-svg { width: calc(15cqi * var(--tam)); height: auto; aspect-ratio: 2 / 3; display: block; overflow: visible; transform-origin: 50% 100%; animation: mecerse 5s ease-in-out infinite; animation-delay: calc(var(--tam) * -7s); filter: drop-shadow(0 3px 3px #0002); }
+.flor.mia::after { content: ""; position: absolute; left: 50%; bottom: -4%; width: 70%; height: 10%; transform: translateX(-50%); border-radius: 50%; background: #ffd54f88; filter: blur(3px); }
+@keyframes mecerse { 50% { rotate: 3deg; } }
+/* Animación de crecimiento: tallo, hojas y por último la cabeza que se abre */
+.flor.crece .f-tallo { stroke-dasharray: 90; stroke-dashoffset: 90; animation: tallo 1.4s ease-out forwards; }
+.flor.crece .f-hoja { transform-box: fill-box; transform-origin: 100% 100%; transform: scale(0); animation: brotar .6s cubic-bezier(.2,.9,.3,1.4) 1s forwards; }
+.flor.crece .f-hoja2 { transform-origin: 0 100%; animation-delay: 1.2s; }
+.flor.crece .f-cabeza { transform-box: fill-box; transform-origin: 50% 50%; transform: scale(0) rotate(-90deg); animation: abrir .9s cubic-bezier(.2,.9,.3,1.5) 1.4s forwards; }
+.flor.crece::before { content: "✨"; position: absolute; left: 50%; top: -20%; transform: translateX(-50%); font-size: 5cqi; opacity: 0; animation: chispa 1.4s ease 2.1s; }
+@keyframes tallo { to { stroke-dashoffset: 0; } }
+@keyframes brotar { to { transform: scale(1); } }
+@keyframes abrir { to { transform: scale(1) rotate(0); } }
+@keyframes chispa { 30% { opacity: 1; } to { opacity: 0; translate: 0 -30%; } }
+.flor.crece { z-index: 80 !important; }
+.flor .cartel { position: absolute; left: 50%; bottom: 102%; transform: translateX(-50%); background: var(--acento); color: var(--tinta); font-weight: 800; font-size: clamp(.6rem, 2.4cqi, .9rem); white-space: nowrap; padding: .1rem .5rem; border-radius: 999px; box-shadow: 0 3px 8px #0003; animation: aparecer .5s ease 2.2s both; }
+dialog .aviso-llegada { top: auto; bottom: max(1rem, env(safe-area-inset-bottom)); animation: subir-aviso .5s cubic-bezier(.2,.9,.3,1.3) both; }
+@keyframes subir-aviso { from { transform: translate(-50%, 150%); } }
+.jardin-nota { margin: 0; text-align: center; font-weight: 700; color: #4a4c66; min-height: 1.4em; }
+.jardin-datos { display: grid; gap: .8rem; align-content: start; }
+.jardin-datos h3, .plantar-cuerpo h3 { margin: .2rem 0 0; font-size: 1.05rem; color: var(--tinta); }
+.jardin-total { margin: 0; font-size: 1.1rem; font-weight: 800; }
+.meta-comun { background: #fff; border-radius: 18px; padding: .8rem 1rem; box-shadow: 0 2px 0 #2b2d4210; }
+.barra-progreso.claro { background: #2b2d4214; }
+.barra-progreso.claro span { background: linear-gradient(90deg, #9ccc65, #ffd54f); }
+.metas-hechas { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .5rem; }
+.metas-hechas:empty { display: none; }
+.meta-hecha { background: #e9f9ef; color: #2f7a4f; border-radius: 999px; padding: .2rem .65rem; font-size: .85rem; font-weight: 700; }
+.companeros { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.companeros li { display: flex; align-items: center; gap: .7rem; background: #fff; border-radius: 16px; padding: .5rem .8rem; min-height: 44px; }
+.companeros li.yo { box-shadow: 0 0 0 3px var(--acento) inset; }
+.companeros .emoji-avatar { font-size: 1.7rem; line-height: 1; }
+.companeros .txt { display: grid; min-width: 0; }
+.companeros small { color: #5d5f7a; font-weight: 600; }
+.en-linea { margin-left: auto; flex: none; width: .8rem; height: .8rem; border-radius: 50%; background: #c9cbe0; }
+.en-linea.si { background: var(--ok); box-shadow: 0 0 0 4px #6fcf9733; }
+.aviso.oscuro { color: #5d5f7a; margin: 0; }
+
+/* Elegir flor */
+.plantar-cuerpo { display: grid; gap: 1rem; }
+.previa { display: grid; justify-items: center; gap: .3rem; background: linear-gradient(180deg, #e3f4fb, #e8f5d9); border-radius: 22px; padding: 1rem; }
+.previa-flor { width: 6.5rem; aspect-ratio: 2 / 3; }
+.previa-flor svg { width: 100%; height: 100%; animation: mecerse 4s ease-in-out infinite; transform-origin: 50% 100%; }
+.tipos-flor { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; margin-top: .5rem; }
+.tipo-flor { flex-direction: column; gap: .2rem; background: #fff; color: var(--tinta); border: 3px solid #2b2d4214; border-radius: 18px; padding: .5rem .3rem; font-weight: 700; font-size: .9rem; }
+.tipo-flor svg { width: 2.6rem; height: 3.6rem; }
+.tipo-flor[aria-pressed="true"] { border-color: var(--acento); background: #fff4e6; }
+.colores-flor { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+.color-flor { gap: .45rem; background: #fff; color: var(--tinta); border: 3px solid #2b2d4214; padding: .4rem .9rem .4rem .45rem; font-weight: 700; text-transform: capitalize; }
+.color-flor .muestra { width: 1.7rem; height: 1.7rem; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 2px #2b2d4222; }
+.color-flor[aria-pressed="true"] { border-color: var(--acento); background: #fff4e6; }
+@media (min-width: 760px) {
+  .jardin-cuerpo { grid-template-columns: 1.4fr 1fr; align-items: start; }
+  .plantar-cuerpo { grid-template-columns: 12rem 1fr; align-items: start; }
+  dialog#jardin { width: min(96vw, 1060px); }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .jardin-cuerpo { grid-template-columns: 1.3fr 1fr; align-items: start; }
+  .jardin-escena { position: sticky; top: 0; }
+  .plantar-cuerpo { grid-template-columns: 9rem 1fr; align-items: start; }
+  .previa { position: sticky; top: 0; }
+  .previa-flor { width: 4.5rem; }
+  .tipos-flor { grid-template-columns: repeat(6, 1fr); }
+  .tipo-flor svg { width: 2rem; height: 2.8rem; }
+  .estrellas-boton { padding: .2rem .7rem .2rem .5rem; font-size: .95rem; }
+}
+@media (max-width: 600px) {
+  .estrellas-boton { padding: .3rem .7rem .3rem .55rem; }
+}
+
+/* ---------- Vida de fondo en la escena (nubes, aves, peces, luciérnagas, fugaces, destellos) ---------- */
+.capa-vida { pointer-events: none; overflow: hidden; z-index: 1; }
+.vida { position: absolute; display: block; font-style: normal; }
+.vida-nube { width: 22cqi; height: 6cqi; border-radius: 99px; background: #ffffffb0; filter: blur(1px); opacity: .8;
+  box-shadow: 5cqi -2cqi 0 -1cqi #ffffffa0, -4cqi -1cqi 0 -1.5cqi #ffffff90;
+  animation: derivar calc(70s + var(--i) * 25s) linear infinite; animation-delay: calc(var(--i) * -31s); left: 0 !important; }
+@keyframes derivar { from { transform: translateX(-30cqi); } to { transform: translateX(120cqi); } }
+.vida-ave, .vida-gaviota { width: 3.2cqi; color: #2b2d42aa; left: 0 !important; animation: volar calc(18s + var(--i) * 7s) linear infinite; animation-delay: calc(var(--i) * -9s); }
+.vida-gaviota { color: #ffffffdd; width: 3.8cqi; }
+.vida-ave svg, .vida-gaviota svg { display: block; width: 100%; animation: aletear .5s ease-in-out infinite alternate; }
+@keyframes volar { 0% { transform: translate(-10cqi, 0); } 50% { transform: translate(50cqi, -3cqi); } 100% { transform: translate(115cqi, 1cqi); } }
+@keyframes aletear { to { transform: scaleY(.45); } }
+.vida-pez { font-size: 3.6cqi; left: 0 !important; animation: nadar calc(16s + var(--i) * 5s) linear infinite; animation-delay: calc(var(--i) * -6s); }
+.vida-pez:nth-child(even) { animation-name: nadar-vuelta; }
+@keyframes nadar { 0% { transform: translate(110cqi, 0); } 50% { transform: translate(50cqi, 2cqi); } 100% { transform: translate(-12cqi, 0); } }
+@keyframes nadar-vuelta { 0% { transform: translate(-12cqi, 0) scaleX(-1); } 50% { transform: translate(50cqi, -2cqi) scaleX(-1); } 100% { transform: translate(110cqi, 0) scaleX(-1); } }
+.vida-luz { width: 1cqi; height: 1cqi; border-radius: 50%; background: #fff59d; box-shadow: 0 0 1.6cqi #fff176; animation: titilar calc(1.6s + var(--i) * .3s) ease-in-out infinite, flotar calc(4s + var(--i) * .5s) ease-in-out infinite; }
+.vida-fugaz { width: 12cqi; height: 2px; border-radius: 2px; background: linear-gradient(90deg, #fff0, #fff); left: calc(60% + var(--i) * 20%) !important; animation: fugaz calc(7s + var(--i) * 5s) cubic-bezier(.3,.1,.3,1) infinite; animation-delay: calc(2s + var(--i) * 3s); }
+.vida-destello { color: #e0f7fa; font-size: 2.2cqi; text-shadow: 0 0 1.5cqi #80deea; animation: titilar calc(1.8s + var(--i) * .25s) ease-in-out infinite; }
+/* El avatar respira y el monumento brilla un poco: la ventana nunca está quieta del todo */
+.avatar .emoji { animation: respirar 4s ease-in-out infinite; }
+@keyframes respirar { 50% { transform: scale(1.04); } }
+.monumento { animation: aparecer 1s ease both; }

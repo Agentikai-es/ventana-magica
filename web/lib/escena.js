@@ -140,6 +140,42 @@ function elemento(doc, clase, item, retraso) {
   return d;
 }
 
+// Vida de fondo (25 nov): nubes que pasan, pájaros, peces, luciérnagas, estrellas fugaces y destellos.
+// Depende del lugar y de la hora; posiciones fijas por índice para que la escena sea estable.
+const INTERIOR = ['espacio', 'mar', 'cueva'];
+export function vidaDeFondo(ambiente, momento = 'dia') {
+  const base = AMBIENTES[ambiente]?.base || ambiente;
+  const noche = momento === 'noche';
+  const v = [];
+  const cielo = !INTERIOR.includes(base) && !INTERIOR.includes(ambiente);
+  if (cielo && !noche) v.push(['nube', 3]);
+  if (cielo && !noche && !['polo'].includes(base)) v.push([base === 'playa' ? 'gaviota' : 'ave', 2]);
+  if (base === 'mar') v.push(['pez', 4]);
+  if (noche && ['bosque', 'campo', 'selva', 'llanura', 'castillo'].includes(base)) v.push(['luz', 10]);
+  if ((noche && cielo) || base === 'espacio') v.push(['fugaz', 2]);
+  if (ambiente === 'cueva') v.push(['destello', 12]);
+  return v.flatMap(([tipo, n]) => Array.from({ length: n }, (_, i) => ({ tipo, i })));
+}
+
+const PECES = ['🐠', '🐟', '🐡', '🐠'];
+function pintarVida(doc, ambiente, momento) {
+  const capa = doc.createElement('div');
+  capa.className = 'capa capa-vida';
+  capa.setAttribute('aria-hidden', 'true');
+  for (const { tipo, i } of vidaDeFondo(ambiente, momento)) {
+    const e = doc.createElement('i');
+    e.className = `vida vida-${tipo}`;
+    e.style.setProperty('--i', i);
+    if (tipo === 'pez') e.textContent = PECES[i % PECES.length];
+    if (tipo === 'ave' || tipo === 'gaviota') e.innerHTML = '<svg viewBox="0 0 24 10"><path d="M1 7 Q6 1 12 7 Q18 1 23 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+    if (tipo === 'destello') e.textContent = '✦';
+    e.style.left = `${(i * 29 + 7) % 92}%`;
+    e.style.top = `${tipo === 'pez' ? 40 + ((i * 17) % 40) : tipo === 'luz' || tipo === 'destello' ? 30 + ((i * 23) % 55) : 6 + ((i * 13) % 26)}%`;
+    capa.appendChild(e);
+  }
+  return capa;
+}
+
 // Pinta la escena en el contenedor (solo navegador).
 export function pintarEscena(contenedor, escena) {
   const doc = contenedor.ownerDocument;
@@ -184,5 +220,6 @@ export function pintarEscena(contenedor, escena) {
     if (c.capa === 'personajes') c.items.forEach((it, i) => capa.appendChild(elemento(doc, 'personaje', it, 0.3 + i * 0.2)));
     if (c.capa === 'avatar') capa.appendChild(elemento(doc, 'avatar', c.item, 0.9));
     contenedor.appendChild(capa);
+    if (c.capa === 'decorado') contenedor.appendChild(pintarVida(doc, escena.ambiente, contenedor.dataset.momento));
   }
 }

@@ -42,7 +42,7 @@ test('cada niño ve a los demás de la planta solo con alias, avatar y dónde es
   assert.deepEqual(v.planta.map((x) => x.alias), ['Nico', 'Sara']);
   const sara = vecino(v, 'Sara');
   assert.match(sara.lugar, /París/);
-  assert.deepEqual(Object.keys(sara).sort(), ['alias', 'ambiente', 'avatar', 'id', 'lugar', 'mensajes', 'paleta']);
+  assert.deepEqual(Object.keys(sara).sort(), ['alias', 'ambiente', 'avatar', 'enLinea', 'id', 'lugar', 'mensajes', 'paleta']);
   assert.ok(v.animos.length >= 4);
 });
 

@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Ventana Mágica · Diagrama de funcionamiento</title>
+<!-- Fuente del PDF docs/diagrama-funcionamiento.pdf. Se genera con: bash scripts/diagrama-pdf.sh
+     Estilo de boceto a mano (como el cuaderno de Jamin): papel rayado, tinta azul, trazos temblorosos. Solo datos ficticios. -->
+<style>
+  @page { size: A4 landscape; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #ddd; }
+  .pagina { width: 297mm; height: 210mm; position: relative; overflow: hidden; page-break-after: always; break-after: page; margin: 0 auto 8mm;
+    background: #fbfaf6 repeating-linear-gradient(180deg, transparent 0 8.4mm, #c9d3ea 8.4mm 8.6mm); }
+  .pagina:last-child { page-break-after: auto; break-after: auto; }
+  .pagina::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 14mm;
+    background: radial-gradient(circle at 7mm 50%, #d9d9d9 2.2mm, #9a9a9a 2.4mm, transparent 2.6mm) 0 0 / 14mm 7mm repeat-y; }
+  svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  text { font-family: "Noteworthy", "Marker Felt", "Chalkboard SE", cursive; fill: #1e2a78; }
+  .t { font-family: "Marker Felt", "Noteworthy", cursive; }
+  @media screen { body { padding: 8mm 0; } .pagina { box-shadow: 0 4px 20px #0003; } }
+</style>
+</head>
+<body>
+<section class="pagina"><svg id="p1" viewBox="0 0 1123 794"></svg></section>
+<section class="pagina"><svg id="p2" viewBox="0 0 1123 794"></svg></section>
+<section class="pagina"><svg id="p3" viewBox="0 0 1123 794"></svg></section>
+<section class="pagina"><svg id="p4" viewBox="0 0 1123 794"></svg></section>
+<script>
+// ---------- Lápiz: trazos temblorosos y deterministas ----------
+const NS = 'http://www.w3.org/2000/svg';
+let semilla = 7;
+const azar = () => { semilla = (semilla * 16807) % 2147483647; return semilla / 2147483647; };
+const tiembla = (v, a = 1.6) => v + (azar() - 0.5) * 2 * a;
+const TINTA = '#1e2a78', ROJO = '#c0392b', VERDE = '#2e7d4f', NARANJA = '#d9822b', MORADO = '#6a4fb3';
+
+function nodo(svg, tag, attrs, texto) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (texto != null) e.textContent = texto;
+  svg.appendChild(e);
+  return e;
+}
+function linea(svg, x1, y1, x2, y2, { color = TINTA, ancho = 2.2, pasadas = 2 } = {}) {
+  for (let p = 0; p < pasadas; p++) {
+    const mx = (x1 + x2) / 2 + (azar() - 0.5) * 3, my = (y1 + y2) / 2 + (azar() - 0.5) * 3;
+    nodo(svg, 'path', { d: `M${tiembla(x1)} ${tiembla(y1)} Q${mx} ${my} ${tiembla(x2)} ${tiembla(y2)}`, fill: 'none', stroke: color, 'stroke-width': p ? ancho * 0.6 : ancho, 'stroke-linecap': 'round', opacity: p ? 0.55 : 0.95 });
+  }
+}
+function caja(svg, x, y, w, h, { color = TINTA, relleno = null, ancho = 2.4 } = {}) {
+  if (relleno) nodo(svg, 'path', { d: `M${tiembla(x + 3)} ${tiembla(y + 3)} L${tiembla(x + w - 2)} ${tiembla(y + 2)} L${tiembla(x + w - 3)} ${tiembla(y + h - 2)} L${tiembla(x + 2)} ${tiembla(y + h - 3)}Z`, fill: relleno, opacity: 0.55 });
+  linea(svg, x, y, x + w + 4, y, { color, ancho });
+  linea(svg, x + w, y - 3, x + w, y + h + 2, { color, ancho });
+  linea(svg, x + w + 3, y + h, x - 2, y + h, { color, ancho });
+  linea(svg, x, y + h + 3, x, y - 2, { color, ancho });
+}
+function flecha(svg, x1, y1, x2, y2, { color = TINTA, texto, dx = 0, dy = -8, tam = 15, doble = false } = {}) {
+  linea(svg, x1, y1, x2, y2, { color, ancho: 2 });
+  const ang = Math.atan2(y2 - y1, x2 - x1);
+  const punta = (x, y, a) => {
+    linea(svg, x, y, x - 13 * Math.cos(a - 0.45), y - 13 * Math.sin(a - 0.45), { color, ancho: 2, pasadas: 1 });
+    linea(svg, x, y, x - 13 * Math.cos(a + 0.45), y - 13 * Math.sin(a + 0.45), { color, ancho: 2, pasadas: 1 });
+  };
+  punta(x2, y2, ang);
+  if (doble) punta(x1, y1, ang + Math.PI);
+  if (texto) escribe(svg, (x1 + x2) / 2 + dx, (y1 + y2) / 2 + dy, texto, { tam, color, centro: true });
+}
+function escribe(svg, x, y, texto, { tam = 17, color = TINTA, centro = false, gira = 0, peso = 400, clase = '' } = {}) {
+  const lineas = String(texto).split('\n');
+  lineas.forEach((l, i) => nodo(svg, 'text', {
+    x, y: y + i * tam * 1.22, 'font-size': tam, fill: color, 'text-anchor': centro ? 'middle' : 'start', 'font-weight': peso,
+    transform: gira ? `rotate(${gira} ${x} ${y})` : '', class: clase,
+  }, l));
+}
+function rotulo(svg, x, y, w, h, titulo, sub, opts = {}) {
+  caja(svg, x, y, w, h, opts);
+  escribe(svg, x + w / 2, y + (sub ? h / 2 - 4 : h / 2 + 8), titulo, { tam: opts.tam || 26, centro: true, color: opts.color || TINTA, clase: 't' });
+  if (sub) escribe(svg, x + w / 2, y + h / 2 + 20, sub, { tam: opts.subtam || 14, centro: true, color: opts.color || TINTA });
+}
+function subraya(svg, x, y, w, color = TINTA) { linea(svg, x, y, x + w, y + 2, { color, ancho: 2.6 }); }
+function titulo(svg, texto, sub) {
+  escribe(svg, 70, 62, texto, { tam: 38, clase: 't' });
+  subraya(svg, 70, 74, texto.length * 15.5);
+  if (sub) escribe(svg, 72, 102, sub, { tam: 17, color: '#4a4f80' });
+  escribe(svg, 1050, 770, 'Ventana Mágica · 25 nov 2026 · datos ficticios', { tam: 12, color: '#7a7fa8', gira: 0 }).textContent;
+}
+function circulo(svg, cx, cy, r, color = ROJO) {
+  nodo(svg, 'ellipse', { cx: tiembla(cx), cy: tiembla(cy), rx: r * 1.08, ry: r * 0.92, fill: 'none', stroke: color, 'stroke-width': 2, transform: `rotate(${(azar() - 0.5) * 12} ${cx} ${cy})` });
+}
+function nota(svg, x, y, w, h, texto, { color = '#fff3b0', tam = 14 } = {}) {
+  nodo(svg, 'rect', { x, y, width: w, height: h, fill: color, transform: `rotate(${(azar() - 0.5) * 3} ${x + w / 2} ${y + h / 2})`, opacity: 0.95 });
+  escribe(svg, x + 10, y + 22, texto, { tam, color: '#3b3b3b' });
+}
+function pie(svg, n) { escribe(svg, 1080, 772, `${n}/4`, { tam: 14, color: '#7a7fa8' }); escribe(svg, 70, 772, 'Ventana Mágica · diagrama de funcionamiento · 25 nov 2026 · todo con datos ficticios', { tam: 12, color: '#7a7fa8' }); }
+
+// ================= Página 1: la caja y cómo funciona por dentro =================
+{
+  const s = document.getElementById('p1');
+  escribe(s, 70, 62, 'Cómo funciona por dentro', { tam: 38, clase: 't' }); subraya(s, 70, 74, 400);
+  escribe(s, 72, 102, 'Todo vive en una caja dentro del hospital, con su propia wifi. Sin internet y sin nube.', { tam: 17, color: '#4a4f80' });
+
+  // Caja
+  rotulo(s, 430, 135, 190, 70, 'Caja', null, { tam: 34 });
+  escribe(s, 640, 158, 'Raspberry Pi 4', { tam: 22 });
+  escribe(s, 640, 186, '— HTTPS con CA local · wifi propia', { tam: 18 });
+  linea(s, 525, 205, 525, 260);
+  // Servidor
+  rotulo(s, 410, 262, 230, 72, 'Servidor', 'Node 22 · sin dependencias', { tam: 30 });
+  flecha(s, 640, 298, 805, 298, { texto: 'node:sqlite', tam: 16, doble: true });
+  rotulo(s, 810, 255, 140, 80, 'DB', 'SQLite · un archivo', { tam: 34 });
+  escribe(s, 815, 366, 'fotos en carpeta 30 días · audio se borra', { tam: 13 });
+  escribe(s, 815, 384, 'al transcribir · estrellas, flores, regalos', { tam: 13 });
+
+  // Voz entrante
+  rotulo(s, 110, 180, 170, 66, 'voz entrante', null, { tam: 22, color: TINTA });
+  escribe(s, 100, 272, 'whisper tiny q5_1 + ffmpeg', { tam: 17 });
+  escribe(s, 100, 292, 'frases de 5 s · dentro de la caja', { tam: 13, color: '#4a4f80' });
+  flecha(s, 282, 230, 405, 282, {});
+  // Voz saliente
+  rotulo(s, 110, 360, 170, 66, 'voz saliente', null, { tam: 22 });
+  escribe(s, 300, 410, 'piper (es_ES)', { tam: 18 });
+  escribe(s, 300, 430, 'lee la narración · si tarda, voz del móvil', { tam: 13, color: '#4a4f80' });
+  flecha(s, 410, 330, 285, 382, {});
+  // IA local
+  rotulo(s, 110, 470, 170, 62, 'IA pequeña', 'llama.cpp · opcional', { tam: 22, subtam: 13, color: MORADO });
+  flecha(s, 285, 482, 445, 336, { color: MORADO });
+  escribe(s, 300, 520, 'ideas e intenciones', { tam: 14, color: MORADO });
+  escribe(s, 100, 556, 'solo elige del catálogo (JSON) · nunca escribe', { tam: 13, color: MORADO });
+  escribe(s, 100, 574, 'al niño · sin ella, reglas del catálogo', { tam: 13, color: MORADO });
+
+  // Interfaz
+  linea(s, 525, 334, 525, 470);
+  rotulo(s, 420, 472, 220, 70, 'Interfaz', 'PWA en el móvil', { tam: 32 });
+  escribe(s, 430, 568, 'funciona sin conexión con la caja', { tam: 14, color: '#4a4f80' });
+  // Cuatro pantallas
+  const pant = [['Ventana', 'móvil del niño', 680, 440], ['Enviar', 'familia y clase', 680, 510], ['Aprobar', 'adulto de confianza', 680, 580], ['Panel', 'personal del hospital', 680, 650]];
+  for (const [t, sub, x, y] of pant) { rotulo(s, x + 110, y - 10, 170, 50, t, sub, { tam: 20, subtam: 12 }); }
+  flecha(s, 642, 500, 785, 455, {}); flecha(s, 642, 508, 785, 525, {}); flecha(s, 642, 518, 785, 595, {}); flecha(s, 642, 528, 785, 662, {});
+  escribe(s, 650, 440, 'tiempo real (SSE)', { tam: 13 });
+
+  // Flujo entrada → voz → texto → salida (como en el boceto)
+  const fx = 1000;
+  rotulo(s, fx, 432, 100, 36, 'entrada', null, { tam: 18 });
+  linea(s, fx + 50, 470, fx + 50, 484);
+  escribe(s, fx + 50, 502, 'voz', { tam: 19, centro: true });
+  linea(s, fx + 50, 508, fx + 50, 520);
+  escribe(s, fx + 50, 540, 'texto', { tam: 19, centro: true });
+  escribe(s, fx + 58, 522, 'o la escribe', { tam: 11 });
+  linea(s, fx + 50, 548, fx + 50, 568);
+  rotulo(s, fx, 570, 100, 36, 'salida', null, { tam: 18, color: NARANJA });
+  escribe(s, fx - 4, 630, '· imagen de fondo', { tam: 13, color: NARANJA });
+  escribe(s, fx - 4, 648, '· sonido ambiente', { tam: 13, color: NARANJA });
+  escribe(s, fx - 4, 666, '· animación de fondo', { tam: 13, color: NARANJA });
+  escribe(s, fx - 4, 684, '· narración (piper)', { tam: 13, color: NARANJA });
+
+  nota(s, 90, 620, 520, 118, 'Por qué así:\n· Pi 4 sin internet = cumple «sin internet» del reto.\n· El micrófono del móvil exige HTTPS → CA local de la caja.\n· Fotos sin metadatos ni GPS; nada clínico; solo alias.\n· Coste de software: 0 € · copia de seguridad = 1 archivo + 1 carpeta.', { tam: 14 });
+  pie(s, 1);
+}
+
+// ================= Página 2: un día en el hospital =================
+{
+  const s = document.getElementById('p2');
+  escribe(s, 70, 62, 'Un día de verdad en la planta', { tam: 38, clase: 't' }); subraya(s, 70, 74, 460);
+  escribe(s, 72, 102, 'Quién hace qué. Nada llega al niño ni sale de él sin que lo vea un adulto de confianza.', { tam: 17, color: '#4a4f80' });
+
+  // Actores
+  rotulo(s, 80, 150, 200, 70, 'Familia / clase', 'móvil · enlace con código', { tam: 22, subtam: 12 });
+  rotulo(s, 80, 330, 200, 70, 'Adulto que aprueba', 'tutor o personal', { tam: 22, subtam: 12, color: ROJO });
+  rotulo(s, 470, 240, 190, 80, 'Niño', 'Leo · 8 años · alias', { tam: 34 });
+  rotulo(s, 860, 150, 200, 70, 'Amigo de planta', 'Sara · otra cama, otra tablet', { tam: 21, subtam: 12 });
+  rotulo(s, 860, 330, 200, 70, 'Su adulto', 'el papá de Sara', { tam: 22, subtam: 12, color: ROJO });
+  rotulo(s, 470, 560, 190, 66, 'Panel hospital', 'altas · códigos · comunidad', { tam: 20, subtam: 12 });
+
+  // Familia → aprobar → niño
+  flecha(s, 180, 222, 180, 326, { texto: '1. foto + pistas', dx: 70, dy: 0, tam: 15 });
+  flecha(s, 282, 365, 468, 300, { color: ROJO, texto: '2. aprueba', dx: -8, dy: 26, tam: 15 });
+  escribe(s, 300, 430, '3. le llega una carta al buzón:', { tam: 15 });
+  escribe(s, 300, 450, 'puzle → acertijo (¿quién? ¿desde dónde?)', { tam: 13 });
+  escribe(s, 300, 468, '→ descubre la foto', { tam: 13 }); escribe(s, 420, 470, '+1 ★', { tam: 17, color: NARANJA });
+  flecha(s, 468, 262, 284, 196, { texto: '4. reacciona ❤ y contesta', dx: -6, dy: -16, tam: 14 });
+  escribe(s, 300, 160, '(lo que contesta también lo ve antes el adulto)', { tam: 12, color: ROJO });
+
+  // Niño ↔ amigo de planta
+  flecha(s, 662, 262, 856, 196, { texto: 'ánimos, visitas: llegan al momento', dy: -14, tam: 13 });
+  flecha(s, 960, 224, 960, 326, { color: ROJO, texto: 'postal de Sara', dx: 62, dy: 4, tam: 13 });
+  flecha(s, 856, 368, 662, 306, { color: ROJO, texto: 'su papá la aprueba y llega a Leo', dx: -10, dy: 36, tam: 13 });
+  escribe(s, 700, 440, 'Leo adivina dónde está Sara hoy', { tam: 15 }); escribe(s, 935, 440, '+2 ★ a Leo', { tam: 16, color: NARANJA });
+  escribe(s, 700, 462, 'y le manda 🎁 «¡me gustó tu postal!»', { tam: 15 }); escribe(s, 960, 462, '+2 ★ a Sara', { tam: 16, color: NARANJA });
+  escribe(s, 700, 484, 'regalar no le cuesta nada a Leo (y cuenta en el jardín)', { tam: 13, color: '#4a4f80' });
+
+  // Panel
+  flecha(s, 565, 556, 565, 324, {});
+  escribe(s, 578, 540, 'activa la comunidad', { tam: 13 }); escribe(s, 578, 556, 'con consentimiento', { tam: 13 });
+  escribe(s, 690, 600, 'Al alta: botón «alta» → se borran fotos, audios, chats', { tam: 14 });
+  escribe(s, 690, 620, 'y estrellas. La flor se queda sin nombre en el jardín.', { tam: 14 });
+
+  nota(s, 80, 470, 330, 160, 'Reglas que nunca se saltan:\n· solo alias y avatar, nunca fotos del niño\n· sin audio entre niños\n· fotos de clase sin caras\n· todo caduca: 30 días o al alta\n· el tutor exporta o borra todo', { tam: 14 });
+  pie(s, 2);
+}
+
+// ================= Página 3: estrellas → flor → jardín =================
+{
+  const s = document.getElementById('p3');
+  escribe(s, 70, 62, 'Estrellas, flores y el Jardín de los recuerdos', { tam: 36, clase: 't' }); subraya(s, 70, 74, 680);
+  escribe(s, 72, 102, 'Recompensa colaborativa: nadie gana a nadie. El jardín es de toda la planta y crece entre todos.', { tam: 17, color: '#4a4f80' });
+
+  // Ganar estrellas
+  rotulo(s, 80, 140, 270, 56, 'carta de la familia', 'puzle + acertijo resuelto', { tam: 20, subtam: 12 });
+  rotulo(s, 80, 220, 270, 56, 'postal / puzle de un amigo', 'de la planta, resuelto', { tam: 19, subtam: 12 });
+  rotulo(s, 80, 300, 270, 56, 'regalo de un amigo', '«me gustó lo tuyo»', { tam: 20, subtam: 12 });
+  escribe(s, 365, 176, '+1 ★', { tam: 24, color: NARANJA }); escribe(s, 365, 256, '+2 ★', { tam: 24, color: NARANJA }); escribe(s, 365, 336, '+2 ★', { tam: 24, color: NARANJA });
+  flecha(s, 430, 170, 520, 240, { color: NARANJA }); flecha(s, 430, 250, 520, 250, { color: NARANJA }); flecha(s, 430, 330, 520, 262, { color: NARANJA });
+  rotulo(s, 525, 210, 150, 80, '★ ×10', 'una sola vez por carta', { tam: 30, subtam: 12, color: NARANJA });
+
+  // Flor
+  flecha(s, 678, 250, 760, 250, { texto: 'elige', tam: 15 });
+  caja(s, 765, 190, 280, 130, { color: VERDE });
+  escribe(s, 905, 228, 'Flor a elegir', { tam: 26, color: VERDE, centro: true, clase: 't' });
+  escribe(s, 780, 268, 'rosa (5 colores) · girasol · lirio', { tam: 15, color: VERDE });
+  escribe(s, 780, 290, 'tulipán · margarita · amapola', { tam: 15, color: VERDE });
+  escribe(s, 780, 312, '→ crece animada: tallo, hojas, ¡flor!', { tam: 14, color: VERDE });
+  // dibujo de flor creciendo
+  const flor = (x, y, esc, c) => { linea(s, x, y, x, y - 60 * esc, { color: VERDE, ancho: 3 }); if (esc > 0.5) { for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; nodo(s, 'ellipse', { cx: x + Math.cos(a) * 10 * esc, cy: y - 60 * esc + Math.sin(a) * 10 * esc, rx: 7 * esc, ry: 7 * esc, fill: c, opacity: .8 }); } nodo(s, 'circle', { cx: x, cy: y - 60 * esc, r: 5 * esc, fill: '#6b4226' }); } else nodo(s, 'ellipse', { cx: x + 6, cy: y - 30 * esc, rx: 7, ry: 3, fill: VERDE, transform: `rotate(-30 ${x + 6} ${y - 30 * esc})` }); };
+  flor(800, 420, 0.35, '#ffc928'); escribe(s, 830, 400, '→', { tam: 24 }); flor(880, 420, 0.7, '#ffc928'); escribe(s, 910, 400, '→', { tam: 24 }); flor(960, 420, 1, '#ffc928');
+
+  // Jardín
+  flecha(s, 905, 324, 650, 470, { color: VERDE, texto: 'se planta en', dx: -40, dy: 0, tam: 15 });
+  caja(s, 120, 450, 520, 230, { color: VERDE, relleno: '#e3f3d6' });
+  escribe(s, 140, 486, 'Jardín de los recuerdos (de toda la planta)', { tam: 21, color: VERDE, clase: 't' });
+  escribe(s, 140, 516, '«Entre todos: 8 flores y 2 regalos»', { tam: 16 });
+  escribe(s, 140, 542, 'metas comunes:', { tam: 16 });
+  escribe(s, 160, 564, '5 🦋 mariposas · 12 ⛲ fuente · 20 🌈 arcoíris', { tam: 15 });
+  escribe(s, 160, 584, '35 🌳 árbol de los deseos · 50 ✨ luciérnagas', { tam: 15 });
+  escribe(s, 140, 612, 'quién cuida el jardín: por orden alfabético,', { tam: 15 });
+  escribe(s, 140, 632, 'con flores aportadas 🌸 y regalos dados 🎁', { tam: 15 });
+  escribe(s, 140, 658, '● en línea = tiene la ventana abierta ahora (dentro de la caja)', { tam: 13, color: VERDE });
+
+  nota(s, 690, 500, 380, 175, 'Por qué colaborativo:\n· sin puestos ni «el mejor»: un niño enfermo\n  no compite con otro niño enfermo\n· regalar suma al que regala (🎁 dados)\n· las metas las consigue la planta entera\n· al alta, la flor se queda sin nombre:\n  «un recuerdo de un niño que ya está en casa»', { tam: 14 });
+  pie(s, 3);
+}
+
+// ================= Página 4: fase 2 (fuera de la demo) =================
+{
+  const s = document.getElementById('p4');
+  escribe(s, 70, 62, 'Fase 2 · después de la demo', { tam: 38, clase: 't' }); subraya(s, 70, 74, 430);
+  escribe(s, 72, 102, 'No entra mañana: la regla del reto es «sin internet». Así se podría hacer en un hospital real sin saltársela.', { tam: 17, color: '#4a4f80' });
+
+  // Federación de jardines
+  escribe(s, 80, 150, 'A · Jardines de otros hospitales de España', { tam: 22, clase: 't' });
+  rotulo(s, 80, 180, 170, 70, 'Caja H. Zaragoza', null, { tam: 18 });
+  rotulo(s, 80, 300, 170, 70, 'Caja H. Huesca', null, { tam: 18 });
+  rotulo(s, 80, 420, 170, 70, 'Caja H. Teruel', null, { tam: 18 });
+  rotulo(s, 400, 290, 220, 90, 'Puente del hospital', 'proxy que ya publica «Enviar»', { tam: 20, subtam: 12, color: MORADO });
+  flecha(s, 252, 215, 398, 318, { color: MORADO }); flecha(s, 252, 335, 398, 335, { color: MORADO }); flecha(s, 252, 455, 398, 352, { color: MORADO });
+  escribe(s, 268, 365, 'una vez al día', { tam: 13, color: MORADO });
+  escribe(s, 640, 300, 'Solo viajan RECUENTOS ANÓNIMOS:', { tam: 16, color: MORADO });
+  escribe(s, 640, 322, '«H. Huesca: 23 flores, 41 regalos, meta 🌈»', { tam: 14 });
+  escribe(s, 640, 344, 'sin alias, sin fotos, sin mensajes, firmado', { tam: 14 });
+  escribe(s, 640, 366, '«en línea» = solo dentro de tu caja', { tam: 14 });
+  escribe(s, 640, 388, 'opcional: cada hospital decide (DPO + EIPD)', { tam: 14, color: ROJO });
+
+  // Tras el alta
+  escribe(s, 80, 540, 'B · Seguir escribiendo a los amigos tras el alta', { tam: 22, clase: 't' });
+  rotulo(s, 80, 570, 190, 70, 'Tutor', 'decide al alta', { tam: 22, subtam: 12, color: ROJO });
+  flecha(s, 272, 605, 380, 605, { texto: 'código de alta', tam: 14 });
+  rotulo(s, 385, 570, 230, 70, 'Mi ventana en casa', 'alias · PWA · vía puente', { tam: 20, subtam: 12 });
+  flecha(s, 617, 605, 730, 605, { color: ROJO });
+  escribe(s, 620, 660, 'aprueban los dos tutores', { tam: 13, color: ROJO });
+  rotulo(s, 735, 570, 200, 70, 'Amigos de planta', 'solo los que hizo allí', { tam: 19, subtam: 12 });
+  escribe(s, 80, 680, '· solo postales, acertijos y ánimos, como en la planta; todo con aprobación adulta', { tam: 14 });
+  escribe(s, 80, 700, '· caduca (p. ej. 90 días), revocable con un botón; sin búsqueda de otros niños', { tam: 14 });
+  escribe(s, 80, 720, '· los datos siguen en la caja del hospital: el hospital sigue siendo el responsable', { tam: 14 });
+
+  nota(s, 820, 140, 250, 120, 'Mañana (demo):\njardín local de la planta,\nestrellas, flores y regalos\nfuncionando de verdad.', { tam: 15, color: '#d9f2e3' });
+  pie(s, 4);
+}
+</script>
+</body>
+</html>

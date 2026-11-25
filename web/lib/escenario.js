@@ -94,7 +94,7 @@ export const esNoSe = (frase) => { const f = ` ${normalizar(frase)} `; return NO
 
 // Momento del día real: de noche la ventana propone cielos de noche.
 const momentoDe = (hora) => (hora >= 21 || hora < 7 ? 'noche' : hora >= 18 ? 'atardecer' : 'dia');
-const CLIMA_SUGERIDO = { polo: 'nieve', montana: 'nieve', islandia: 'nieve', canada: 'hojas', golosinas: 'confeti', circo: 'confeti', mar: 'burbujas', hawai: 'despejado' };
+const CLIMA_SUGERIDO = { polo: 'nieve', montana: 'nieve', islandia: 'nieve', canada: 'hojas', golosinas: 'confeti', circo: 'confeti', mar: 'burbujas', arrecife: 'burbujas', ordesa: 'hojas', hawai: 'despejado' };
 
 // Sugerencias para cuando el niño no sabe qué pedir. Primero, ir con un amigo de la planta; después, lugares
 // que aún no ha visitado, con el cielo de la hora real. Siempre 3 y sin repetir. Deterministas con la misma semilla.
