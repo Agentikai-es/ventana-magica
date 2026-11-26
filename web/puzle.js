@@ -23,10 +23,19 @@ function mezclar(n) {
   }
 }
 
-export async function crearPuzle(contenedor, url, { lado = 3, alResolver, titulo = 'Puzle' } = {}) {
+// Mezcla fácil (demo en vivo): solo dos parejas cambiadas → 4 piezas fuera de sitio, se resuelve en 2 toques dobles.
+function mezclarFacil(n) {
+  const o = [...Array(n).keys()];
+  const libres = [...o].sort(() => Math.random() - 0.5).slice(0, 4);
+  [o[libres[0]], o[libres[1]]] = [o[libres[1]], o[libres[0]]];
+  [o[libres[2]], o[libres[3]]] = [o[libres[3]], o[libres[2]]];
+  return o;
+}
+
+export async function crearPuzle(contenedor, url, { lado = 3, alResolver, titulo = 'Puzle', facil = false } = {}) {
   const imagen = await cuadrado(url);
   const n = lado * lado;
-  const orden = mezclar(n);          // orden[posición] = pieza
+  const orden = facil ? mezclarFacil(n) : mezclar(n);          // orden[posición] = pieza
   let elegida = null;
   let terminado = false;
 

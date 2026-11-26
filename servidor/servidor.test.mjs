@@ -477,12 +477,26 @@ test('modo demo: códigos fijos que no caducan, sirven en varios dispositivos y 
   for (const g of [cookieDe(t1), cookieDe(t2)]) assert.equal((await fetch(`${b}/api/ventana`, { headers: { cookie: g } })).status, 200, 'las dos sesiones siguen vivas');
   assert.equal((await (await canjear('111111')).json()).destino, '/enviar');
   assert.equal((await (await canjear('222222')).json()).destino, '/aprobar');
+  // Carta ya enviada y aprobada de la Abuela («Toby en el parque»), con puzle fácil para la demo en vivo.
+  const v = await (await fetch(`${b}/api/ventana`, { headers: { cookie: cookieDe(t1) } })).json();
+  assert.equal(v.fotos.length, 1, 'una carta esperando a Leo');
+  assert.equal(v.fotos[0].juego, 'cerrado');
+  assert.equal(v.fotos[0].facil, true, 'puzle fácil');
+  const foto = await fetch(`${b}/fotos/${v.fotos[0].id}`, { headers: { cookie: cookieDe(t1) } });
+  assert.equal(foto.status, 200); assert.equal(foto.headers.get('content-type'), 'image/jpeg');
+  // El niño es protagonista de su postal: la pose y el sitio viajan con la escena (y se validan).
+  const pon = async (cuerpo) => (await fetch(`${b}/api/ventana/escena`, { method: 'PUT', headers: { 'x-vp': '1', 'content-type': 'application/json', cookie: cookieDe(t1) }, body: JSON.stringify(cuerpo) })).json();
+  const e1 = await pon({ ambiente: 'playa', avatar: 'zorrito', pose: 'corazon', sitio: 'izquierda' });
+  assert.equal(e1.pose, 'corazon'); assert.equal(e1.sitio, 'izquierda');
+  const e2 = await pon({ ambiente: 'playa', pose: '<script>', sitio: 'arriba' });
+  assert.equal(e2.pose, 'saluda'); assert.equal(e2.sitio, 'centro');
   const p = await fetch(`${b}/api/panel/entrar`, { method: 'POST', headers: { 'x-vp': '1', 'content-type': 'application/json' }, body: JSON.stringify({ clave: '123456' }) });
   assert.equal(p.status, 200);
   demo.repo.limpiar(Date.now() + 60 * 24 * 3600 * 1000); // pasan dos meses
   assert.equal((await canjear('123456')).status, 200, 'no caduca');
   const otra = await crearApp({ datos: d2, demo: true, registrar: () => {} }); // reiniciar no duplica nada
   assert.equal(otra.repo.listarEspacios().length, 3, 'Leo, Sara y Nico, sin duplicar');
+  assert.equal(otra.repo.aportes(otra.infoDemo.espacios[0], { tipo: 'foto' }).filter((x) => x.archivo.startsWith('demo-perro')).length, 1, 'la carta de la Abuela no se duplica');
   otra.cerrar(); srv.close(); demo.cerrar();
   await rm(d2, { recursive: true, force: true });
 });

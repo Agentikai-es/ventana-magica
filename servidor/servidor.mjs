@@ -98,7 +98,7 @@ function ipsLocales() {
 const limpiarTexto = (t, max) => String(t ?? '').replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
 
 // ---------- Aplicación ----------
-export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, registrar = console.log, urlsWifi = [], demo = process.env.VP_DEMO === '1', proxy = process.env.VP_PROXY === '1', reinicioHoras = Number(process.env.VP_REINICIO_HORAS) || 0 } = {}) {
+export async function crearApp({ datos = process.env.VP_DATOS || join(RAIZ, 'datos'), claveAdmin, registrar = console.log, urlsWifi = [], demo = process.env.VP_DEMO === '1', proxy = process.env.VP_PROXY === '1', reinicioHoras = Number(process.env.VP_REINICIO_HORAS) || 0 } = {}) {
   const FOTOS = join(datos, 'fotos');
   await mkdir(FOTOS, { recursive: true, mode: 0o700 });
   const repo = abrirDB(join(datos, 'ventana.db'));
@@ -115,6 +115,20 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
   // Modo demo: clave del panel fija («123456») y espacio de Leo con códigos fijos. Nunca con niños reales.
   const infoDemo = demo ? repo.asegurarDemo() : null;
   if (infoDemo) recompensas.sembrarDemo(infoDemo.espacios);
+  // Carta ya enviada y aprobada de la Abuela: «Toby en el parque» (dibujo propio, servidor/demo/perro-parque.svg).
+  async function sembrarCartaDemo() {
+    const leo = infoDemo.espacios[0];
+    if (repo.aportes(leo, { tipo: 'foto' }).some((x) => String(x.archivo || '').startsWith('demo-perro'))) return;
+    const abuela = repo.db.prepare(`SELECT id FROM accesos WHERE espacio_id = ? AND etiqueta = 'Abuela' AND fijo = 1`).get(leo);
+    const archivo = `demo-perro-${randomUUID()}.jpg`;
+    await writeFile(join(FOTOS, archivo), await readFile(join(RAIZ, 'servidor', 'demo', 'perro-parque.jpg')), { mode: 0o600 });
+    repo.crearAporte(leo, {
+      accesoId: abuela?.id ?? null, autor: 'Abuela', tipo: 'foto', estado: 'aprobado', archivo,
+      texto: '¡Toby te manda un lametón! Te esperamos en el parque para jugar a la pelota.',
+      pistas: ['Los domingos te hago croquetas', 'Tengo un perro que se llama Toby'], lugar: 'desde el parque',
+    });
+  }
+  if (infoDemo) await sembrarCartaDemo();
   // En una demo pública (Render) la clave del panel viene de VP_CLAVE_PANEL, nunca la fácil.
   if (demo && !claveAdmin) claveAdmin = process.env.VP_CLAVE_PANEL || '123456';
   if (claveAdmin) hashAdmin = hash(claveAdmin);
@@ -180,6 +194,7 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
       for (const id of infoDemo.espacios) await borrarArchivos(repo.borrarAportes(id, 'reinicio-demo'));
       repo.asegurarDemo();
       recompensas.reiniciarDemo(infoDemo.espacios);
+      await sembrarCartaDemo();
     }, reinicioHoras * HORA);
     reinicio.unref();
   }
@@ -341,8 +356,8 @@ export async function crearApp({ datos = join(RAIZ, 'datos'), claveAdmin, regist
       const a = acceso(req, 'ventana');
       if (ruta === '/api/ventana' && m === 'GET') return json(res, 200, estadoVentana(a.espacio_id));
       if (ruta === '/api/ventana/escena' && m === 'PUT') {
-        const { ambiente, personajes, avatar, sustituido, momento, clima } = await leerJSON(req);
-        const esc = construirEscenario(String(ambiente), { avatar: String(avatar ?? ''), personajes: Array.isArray(personajes) ? personajes.map(String) : [], sustituido: !!sustituido, momento: String(momento ?? 'dia'), clima: String(clima ?? 'despejado') });
+        const { ambiente, personajes, avatar, sustituido, momento, clima, pose, sitio } = await leerJSON(req);
+        const esc = construirEscenario(String(ambiente), { avatar: String(avatar ?? ''), personajes: Array.isArray(personajes) ? personajes.map(String) : [], sustituido: !!sustituido, momento: String(momento ?? 'dia'), clima: String(clima ?? 'despejado'), pose: String(pose ?? 'saluda'), sitio: String(sitio ?? 'centro') });
         if (!esc) throw new ErrorHttp(400, 'ambiente');
         repo.guardarEscena(a.espacio_id, esc);
         return json(res, 200, esc);

@@ -21,6 +21,12 @@ Recompensas (25 nov, hecho en local, sin commit)
 - [ ] Probar las ideas con IA en la Pi real (en el Mac solo está el modelo de 0,5B, que no se usa).
 - [ ] Fase 2 (federación entre hospitales y acceso tras el alta): solo diseño, ver SPEC.md.
 
+Cierre para la demo (26 nov, en local, sin commit)
+- [x] Carta de la Abuela ya aprobada en la demo: «Toby en el parque» (dibujo propio) con puzle fácil (4 piezas fuera de sitio).
+- [x] El niño, protagonista de su postal: elige pose y sitio, y su personaje sale grande y con su nombre en la postal.
+- [x] `npm run demo:limpia` (datos en `datos-demo/`). Prueba de punta a punta en 390×844 y 844×390, con objetivos de 44 px.
+- [ ] Jamin: OK para subir esto a GitHub/Render y a Oracle.
+
 VPS + Apache (25 nov, indicación de los mentores; hecho en local, sin desplegar)
 - [x] Vídeo o GIF de la familia: se pasa a MP4 sin metadatos y su último fotograma es el puzle.
 - [x] Montaje en VPS: `scripts/instalar-vps.sh` (Node 22, ffmpeg, Apache, Let's Encrypt, systemd) y `deploy/apache-ventana.conf`. Probado con Apache en el Mac: subida, aviso en tiempo real y aprobación a través del proxy.

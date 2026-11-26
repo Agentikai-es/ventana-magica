@@ -153,7 +153,7 @@ function burbuja(m) {
   else if (m.tipo === 'postal') {
     const mp = document.createElement('div'); mp.className = 'mini-postal';
     mp.innerHTML = '<div class="marco"><div class="vista"><div class="escena"></div></div></div>';
-    pintarEscena(mp.querySelector('.escena'), componerEscena(m.escena));
+    pintarEscena(mp.querySelector('.escena'), componerEscena(m.escena, { nombre: alias }));
     d.append(mp, Object.assign(document.createElement('div'), { textContent: `${alias} está en ${m.escena.nombre}` }));
     if (m.archivo) d.appendChild(audio());
   }

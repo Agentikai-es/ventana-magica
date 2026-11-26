@@ -1,6 +1,6 @@
 // Tablet del niño: Mi mundo (escenario a su gusto) · Buzón (puzle → acertijo → descubierta) · Mi gente (chat de ida y vuelta)
 // · Amigos (otros niños de la planta: ánimos, visitas, postales y puzles entre ellos).
-import { AMBIENTES, AVATARES, PERSONAJES } from './lib/catalogo.js';
+import { AMBIENTES, AVATARES, PERSONAJES, POSES, SITIOS_AVATAR } from './lib/catalogo.js';
 import { interpretar, construirEscenario, ajustar, sugerir } from './lib/escenario.js';
 import { componerEscena, pintarEscena } from './lib/escena.js';
 import { narrar } from './lib/narracion.js';
@@ -22,7 +22,11 @@ let amigoAbierto = null; // id del amigo de la planta con la conversación abier
 const vistos = JSON.parse(localStorage.getItem('vp-vistos') || '{}'); // último mensaje visto por conversación (solo en esta tablet)
 
 // =============== Mi mundo ===============
+// Cómo sale el niño en sus postales (pose y sitio). Se recuerda en esta tablet y viaja con la escena.
+const miPose = { pose: 'saluda', sitio: 'centro', ...JSON.parse(localStorage.getItem('vp-pose') || '{}') };
+
 async function aplicar(esc, { guardar = true } = {}) {
+  esc = { ...esc, pose: miPose.pose, sitio: miPose.sitio };
   actual = esc;
   pintarEscena($('escena'), componerEscena(esc));
   $('titulo').textContent = esc.nombre;
@@ -44,6 +48,7 @@ async function guardarEscena() {
   try {
     await api('/api/ventana/escena', { metodo: 'PUT', cuerpo: {
       ambiente: actual.ambiente, personajes: actual.personajes, avatar: actual.avatar, sustituido: actual.sustituido, momento: actual.momento, clima: actual.clima,
+      pose: actual.pose, sitio: actual.sitio,
     } });
     if (estado) estado.escena = actual;
   } catch (e) { $('estado').textContent = e.message; }
@@ -227,9 +232,37 @@ $('leer').onclick = async () => {
   reproductor.play().catch(() => leerConDispositivo(texto));
 };
 
+// «Mandar postal»: primero el niño se coloca en su postal (pose y sitio) y la ve tal cual llegará.
+function pintarDiseno() {
+  if (!actual) return;
+  const esc = { ...actual, pose: miPose.pose, sitio: miPose.sitio };
+  pintarEscena($('disenoEscena'), componerEscena(esc, { nombre: estado?.alias }));
+  $('disenoPie').textContent = `${estado?.alias || 'Tú'} en ${actual.nombre}, ${POSES[miPose.pose].nombre.toLowerCase()}`;
+  const opcion = (lista, clave, valor, texto, emoji) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'opcion-diseno';
+    b.setAttribute('aria-pressed', String(miPose[clave] === valor));
+    if (emoji) b.append(Object.assign(document.createElement('span'), { className: 'emoji', textContent: emoji }));
+    b.append(texto);
+    b.onclick = () => { miPose[clave] = valor; efecto('toque'); pintarDiseno(); };
+    return b;
+  };
+  $('posesPostal').replaceChildren(...Object.entries(POSES).map(([id, p]) => opcion('poses', 'pose', id, p.nombre, p.emoji)));
+  $('sitiosPostal').replaceChildren(...Object.entries(SITIOS_AVATAR).map(([id, p]) => opcion('sitios', 'sitio', id, p.nombre)));
+}
+
 $('enviarPostal').onclick = () => {
+  if (!actual) return;
+  pintarDiseno();
+  $('disenoPostal').showModal();
+};
+
+$('disenoListo').onclick = async () => {
+  localStorage.setItem('vp-pose', JSON.stringify({ pose: miPose.pose, sitio: miPose.sitio }));
+  await aplicar(actual);
+  $('disenoPostal').close();
   elegirPestana('Gente');
-  $('estado').textContent = `Elige a quién mandar tu ${actual?.nombre || 'ventana'} como postal-acertijo.`;
+  $('estado').textContent = `Elige a quién mandar tu postal desde ${actual?.nombre || 'tu ventana'}. ¡Sales tú!`;
   $('personas').querySelector('button')?.focus();
 };
 
@@ -344,7 +377,8 @@ function mostrarPuzle(f) {
   const caja = document.createElement('div');
   $('juegoContenido').replaceChildren(ayuda, caja);
   crearPuzle(caja, `/fotos/${f.id}`, {
-    lado: estado.lado || 3,
+    lado: f.facil ? Math.min(estado.lado || 3, 3) : estado.lado || 3,
+    facil: !!f.facil,
     titulo: 'Puzle de tu carta',
     alResolver: async () => {
       const v = await api(`/api/ventana/foto/${f.id}/puzle`, { metodo: 'POST' });
@@ -607,10 +641,10 @@ const amigoDe = (id) => (estado.planta || []).find((a) => a.id === id);
 const claveVisto = (id) => `p:${id}`;
 const sinLeerAmigo = (a) => a.mensajes.filter((m) => !m.mio && m.creado > (vistos[claveVisto(a.id)] || 0)).length;
 
-function miniPostal(esc) {
+function miniPostal(esc, nombre) {
   const mp = document.createElement('div'); mp.className = 'mini-postal';
   mp.innerHTML = '<div class="marco"><div class="vista"><div class="escena"></div></div></div>';
-  if (esc) pintarEscena(mp.querySelector('.escena'), componerEscena(esc));
+  if (esc) pintarEscena(mp.querySelector('.escena'), componerEscena(esc, { nombre }));
   return mp;
 }
 // La ventana de un amigo, tal y como la tiene hoy (con su avatar).
@@ -629,7 +663,7 @@ function pintarAmigos() {
   $('amigos').replaceChildren(...lista.map((a) => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'amigo';
-    const mp = miniPostal(mundoDe(a)); mp.setAttribute('aria-hidden', 'true');
+    const mp = miniPostal(mundoDe(a), a.alias); mp.setAttribute('aria-hidden', 'true');
     const q = document.createElement('span'); q.className = 'quien-es';
     const em = document.createElement('span'); em.className = 'emoji-avatar'; em.textContent = AVATARES[a.avatar]?.emoji || '🙂'; em.setAttribute('aria-hidden', 'true');
     const t = document.createElement('span');
@@ -710,7 +744,7 @@ function burbujaAmigo(m, a) {
     texto(`🧩 ${a.alias} te ha mandado una foto-puzle con un mensaje secreto.`);
     boton('Montar el puzle', () => montarPuzleAmigo(m, a));
   } else {
-    if (m.escena) d.appendChild(miniPostal(m.escena));
+    if (m.escena) d.appendChild(miniPostal(m.escena, m.mio ? null : a.alias));
     if (m.tipo === 'puzle' && m.archivo) d.appendChild(img(`/planta/${m.id}`, 'Foto-puzle'));
     texto(m.tipo === 'puzle' ? `Mensaje secreto: «${m.secreto}»` : m.texto);
     if (m.tipo === 'visita' && !m.mio) boton(`¡Voy a ${m.escena?.nombre || 'su mundo'}!`, () => irDeVisita(a.id));

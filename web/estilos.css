@@ -175,6 +175,10 @@ dialog.hoja::backdrop { background: #0b0e1ed9; backdrop-filter: blur(4px); }
 .componer > *, .componer .fila-c > * { min-width: 0; }
 .componer .fila-c .principal { flex: none; padding: .7rem 1rem; }
 .mini-postal .etiqueta { display: none; }
+/* En la postal el protagonista es el niño: su personaje, más grande y con su nombre. */
+.mini-postal .avatar .emoji { font-size: 17cqi; }
+.mini-postal .avatar .accesorio { font-size: 8cqi; }
+.mini-postal .avatar .etiqueta { display: block; font-size: clamp(.6rem, 4.2cqi, .95rem); padding: .1em .55em; }
 .mini-postal + div { font-weight: 700; margin-top: .3rem; }
 
 /* Modo limpieza: capa que se come todos los toques durante 30 s */
@@ -347,3 +351,29 @@ dialog .aviso-llegada { top: auto; bottom: max(1rem, env(safe-area-inset-bottom)
 .avatar .emoji { animation: respirar 4s ease-in-out infinite; }
 @keyframes respirar { 50% { transform: scale(1.04); } }
 .monumento { animation: aparecer 1s ease both; }
+
+/* Diseñar la postal: el niño es el protagonista (pose y sitio de su personaje) */
+.diseno-cuerpo { display: grid; gap: 1rem; }
+.diseno-previa { display: grid; gap: .4rem; }
+.mini-postal.grande { width: 100%; max-width: 34rem; margin: 0 auto; }
+.diseno-pie { margin: 0; text-align: center; font-weight: 700; color: #4a4c66; }
+.opciones-diseno { display: grid; grid-template-columns: repeat(2, 1fr); gap: .5rem; margin-top: .5rem; }
+.opciones-diseno.tres { grid-template-columns: repeat(3, 1fr); }
+.opcion-diseno { min-height: 48px; gap: .4rem; background: #fff; color: var(--tinta); border: 3px solid #2b2d4214; border-radius: 18px; padding: .45rem .6rem; font-weight: 700; }
+.opcion-diseno .emoji { font-size: 1.5rem; line-height: 1; }
+.opcion-diseno[aria-pressed="true"] { border-color: var(--acento); background: #fff4e6; }
+.avatar .accesorio { position: absolute; right: -.35em; top: -.15em; font-size: 5.5cqi; line-height: 1; }
+.pose-saluda .accesorio { animation: saludar 1.6s ease-in-out infinite; transform-origin: 30% 90%; }
+.pose-salta .emoji { animation: saltar 1.2s ease-in-out infinite; }
+.pose-corazon .accesorio { animation: latir 1.1s ease-in-out infinite; }
+@keyframes saludar { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(22deg); } }
+@keyframes saltar { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-18%); } }
+@keyframes latir { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.25); } }
+@media (prefers-reduced-motion: reduce) { .pose-saluda .accesorio, .pose-salta .emoji, .pose-corazon .accesorio { animation: none; } }
+@media (min-width: 760px) { .diseno-cuerpo { grid-template-columns: 1.3fr 1fr; align-items: start; } }
+@media (orientation: landscape) and (max-height: 500px) {
+  .diseno-cuerpo { grid-template-columns: 1.2fr 1fr; align-items: start; }
+  .diseno-previa { position: sticky; top: 0; }
+}
+/* Enlace a la privacidad dentro del texto: zona táctil de 44 px sin cambiar el interlineado. */
+a[href="/privacidad"] { padding-block: 13px; white-space: nowrap; }

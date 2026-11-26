@@ -314,6 +314,21 @@
   </div>
 </dialog>
 
+<dialog class="hoja" id="disenoPostal" aria-labelledby="disenoTitulo">
+  <div class="hoja-cab"><h2 id="disenoTitulo">Tu postal: ¡tú eres el protagonista!</h2><button class="cerrar-x" type="button" data-cerrar aria-label="Cerrar">×</button></div>
+  <div class="hoja-cuerpo diseno-cuerpo">
+    <div class="diseno-previa"><div class="mini-postal grande"><div class="marco"><div class="vista"><div class="escena" id="disenoEscena"></div></div></div></div>
+      <p class="diseno-pie" id="disenoPie"></p></div>
+    <div>
+      <h3>¿Qué haces en la postal?</h3>
+      <div class="opciones-diseno" id="posesPostal"></div>
+      <h3>¿Dónde te pones?</h3>
+      <div class="opciones-diseno tres" id="sitiosPostal"></div>
+      <button type="button" class="principal" id="disenoListo" style="width:100%;margin-top:1rem"><span data-icono="enviar"></span>¡Lista! Elegir a quién mandarla</button>
+    </div>
+  </div>
+</dialog>
+
 <div id="limpieza" class="limpieza oculto" tabindex="-1" role="alert" aria-live="assertive">
   <span data-icono="gota" class="gota-grande"></span>
   <p>Pantalla bloqueada para limpiarla</p>

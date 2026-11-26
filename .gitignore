@@ -1,5 +1,6 @@
 # Datos de niños, claves y certificados: nunca al repositorio.
 datos/
+datos-demo/
 certs/
 modelos/
 herramientas/

@@ -38,7 +38,8 @@ export function crearJuego(repo) {
 
   // Lo que ve el niño de cada foto, según por dónde va el juego.
   function vistaNino(a) {
-    const base = { id: a.id, juego: a.juego, reaccion: a.reaccion, creado: a.creado };
+    // facil: la carta de la demo se monta con pocas piezas fuera de sitio (para enseñarlo en vivo sin atascos).
+    const base = { id: a.id, juego: a.juego, reaccion: a.reaccion, creado: a.creado, facil: String(a.archivo || '').startsWith('demo-') };
     if (a.juego === 'cerrado') return base;
     if (a.juego === 'resuelto') return { ...base, pistas: a.pistas, opciones: opciones(a), intentos: a.intentos };
     return { ...base, pistas: a.pistas, autor: a.autor, texto: a.texto, lugar: a.lugar, accesoId: a.acceso_id, video: !!a.video };

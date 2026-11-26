@@ -1,7 +1,7 @@
 // Composición (v2): dibuja el escenario en capas (fondo, decorado, objetos, personajes, avatar).
 // Sin imágenes externas: degradado CSS, SVG propio y emojis del catálogo.
 
-import { AMBIENTES, PERSONAJES, OBJETOS, AVATARES } from './catalogo.js';
+import { AMBIENTES, PERSONAJES, OBJETOS, AVATARES, POSES, SITIOS_AVATAR } from './catalogo.js';
 
 // Decorado SVG por ambiente (viewBox 0 0 100 60). Formas simples y suaves.
 const B = 'fill="#ffffff"';
@@ -95,7 +95,8 @@ const SITIOS_OBJETOS = [{ x: 12, y: 18 }, { x: 88, y: 40 }, { x: 30, y: 72 }];
 const SITIOS_PERSONAJES = [{ x: 22, y: 52 }, { x: 74, y: 60 }, { x: 46, y: 36 }];
 
 // Datos puros de la escena: se pueden probar sin navegador.
-export function componerEscena(escenario) {
+// nombre: quién protagoniza la escena (en una postal recibida, el alias de quien la manda; si no, «Tú»).
+export function componerEscena(escenario, { nombre } = {}) {
   if (!escenario || escenario.tipo !== 'escenario') return null;
   const [c1, c2] = escenario.paleta;
   const objetos = escenario.objetos.slice(0, SITIOS_OBJETOS.length).map((id, i) => ({
@@ -113,7 +114,11 @@ export function componerEscena(escenario) {
       { capa: 'decorado', svg: DECORADOS[escenario.ambiente] || DECORADOS[AMBIENTES[escenario.ambiente]?.base] || '', monumento: AMBIENTES[escenario.ambiente]?.monumento || null },
       { capa: 'objetos', items: objetos },
       { capa: 'personajes', items: personajes },
-      { capa: 'avatar', item: { id: escenario.avatar, emoji: av.emoji, etiqueta: `Tú · ${av.nombre}`, x: 50, y: 80 } },
+      { capa: 'avatar', item: {
+        id: escenario.avatar, emoji: av.emoji, etiqueta: nombre ? `${nombre} · ${av.nombre}` : `Tú · ${av.nombre}`,
+        x: (SITIOS_AVATAR[escenario.sitio] || SITIOS_AVATAR.centro).x, y: 80,
+        pose: Object.hasOwn(POSES, escenario.pose || '') ? escenario.pose : 'saluda', accesorio: (POSES[escenario.pose] || POSES.saluda).emoji,
+      } },
       { capa: 'clima', clima: escenario.clima || 'despejado', items: particulas(escenario.clima) },
     ],
   };
@@ -218,7 +223,16 @@ export function pintarEscena(contenedor, escena) {
     }
     if (c.capa === 'objetos') c.items.forEach((it, i) => capa.appendChild(elemento(doc, 'objeto', it, i * 0.15)));
     if (c.capa === 'personajes') c.items.forEach((it, i) => capa.appendChild(elemento(doc, 'personaje', it, 0.3 + i * 0.2)));
-    if (c.capa === 'avatar') capa.appendChild(elemento(doc, 'avatar', c.item, 0.9));
+    if (c.capa === 'avatar') {
+      const av = elemento(doc, 'avatar', c.item, 0.9);
+      if (c.item.pose) {
+        av.classList.add(`pose-${c.item.pose}`);
+        const acc = doc.createElement('span');
+        acc.className = 'accesorio'; acc.textContent = c.item.accesorio; acc.setAttribute('aria-hidden', 'true');
+        av.querySelector('.emoji')?.after(acc);
+      }
+      capa.appendChild(av);
+    }
     contenedor.appendChild(capa);
     if (c.capa === 'decorado') contenedor.appendChild(pintarVida(doc, escena.ambiente, contenedor.dataset.momento));
   }

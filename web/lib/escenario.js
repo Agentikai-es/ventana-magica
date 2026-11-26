@@ -2,7 +2,7 @@
 // Sin modelo de lenguaje: reglas y sinónimos del catálogo. Nunca lanza error.
 
 import {
-  AMBIENTES, PERSONAJES, OBJETOS, AVATARES, MARCAS, NO_PERMITIDO, ALTERNATIVAS_SEGURAS, MOMENTOS, CLIMAS, normalizar,
+  AMBIENTES, PERSONAJES, OBJETOS, AVATARES, MARCAS, NO_PERMITIDO, ALTERNATIVAS_SEGURAS, MOMENTOS, CLIMAS, POSES, SITIOS_AVATAR, normalizar,
 } from './catalogo.js';
 
 const MAX_PERSONAJES = 3;
@@ -54,7 +54,7 @@ function avatarValido(avatar, porDefecto) {
 }
 
 // Construye un escenario completo a partir de un ambiente del catálogo.
-export function construirEscenario(ambiente, { avatar, personajes = [], sustituido = false, momento = 'dia', clima = 'despejado' } = {}) {
+export function construirEscenario(ambiente, { avatar, personajes = [], sustituido = false, momento = 'dia', clima = 'despejado', pose = 'saluda', sitio = 'centro' } = {}) {
   if (!Object.hasOwn(AMBIENTES, ambiente)) return null;
   const a = AMBIENTES[ambiente];
   const lista = [...new Set([...personajes.filter((p) => Object.hasOwn(PERSONAJES, p)), ...a.personajes])].slice(0, MAX_PERSONAJES);
@@ -72,6 +72,8 @@ export function construirEscenario(ambiente, { avatar, personajes = [], sustitui
     sustituido,
     momento: Object.hasOwn(MOMENTOS, momento) ? momento : 'dia',
     clima: Object.hasOwn(CLIMAS, clima) ? clima : 'despejado',
+    pose: Object.hasOwn(POSES, pose) ? pose : 'saluda',
+    sitio: Object.hasOwn(SITIOS_AVATAR, sitio) ? sitio : 'centro',
   };
 }
 
@@ -121,7 +123,7 @@ export function ajustar(escenario, { momento, clima } = {}) {
   if (!escenario || escenario.tipo !== 'escenario') return escenario;
   return construirEscenario(escenario.ambiente, {
     avatar: escenario.avatar, personajes: escenario.personajes, sustituido: escenario.sustituido,
-    momento: momento || escenario.momento, clima: clima || escenario.clima,
+    momento: momento || escenario.momento, clima: clima || escenario.clima, pose: escenario.pose, sitio: escenario.sitio,
   });
 }
 

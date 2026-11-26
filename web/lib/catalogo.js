@@ -318,6 +318,15 @@ export const AVATARES = {
   pinguino: { nombre: 'Pingüino', emoji: '🐧' },
 };
 
+// ---------- El niño protagonista de su postal: pose y sitio de su personaje ----------
+export const POSES = {
+  saluda: { nombre: 'Saludando', emoji: '👋' },
+  salta: { nombre: 'Saltando', emoji: '✨' },
+  corazon: { nombre: 'Con un corazón', emoji: '❤️' },
+  foto: { nombre: 'Haciendo una foto', emoji: '📸' },
+};
+export const SITIOS_AVATAR = { izquierda: { nombre: 'Izquierda', x: 24 }, centro: { nombre: 'Centro', x: 50 }, derecha: { nombre: 'Derecha', x: 76 } };
+
 // ---------- Marcas registradas → equivalente original ----------
 // Si una frase pide un personaje con marca, se usa este personaje original.
 // La marca nunca se muestra ni se lee en la ventana.

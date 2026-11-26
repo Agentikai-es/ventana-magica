@@ -48,10 +48,20 @@ cd ~/dev/ventana-peque && npm run demo
 - Si lleva rato sin uso, tarda ~1 minuto en despertar: ábrelo un rato antes de la demo.
 - Se actualiza solo con cada `git push` a `main`.
 
+## Guion de la demo (lo que ya viene preparado)
+- **Carta de la Abuela ya enviada y aprobada:** «Toby en el parque». Es un dibujo propio, sin fotos reales (`servidor/demo/perro-parque.svg`).
+  - En la tablet de Leo (123456) cuelga un sobre «¡Ábreme!».
+  - El puzle es 3×3 con solo 4 piezas fuera de sitio: se resuelve en 4 toques. Cada casilla es distinta: sol, nube con cometa, árbol, tobogán, cabeza del perro, casita de pájaros, flores, cuerpo con collar y pelota.
+  - Acertijo: «Abuela» y «desde el parque» → +1 ★.
+- **Leo protagonista de su postal:** «Mandar postal» abre «Tu postal: ¡tú eres el protagonista!».
+  - Elige qué hace (saludando, saltando, con un corazón o haciendo una foto) y dónde se pone (izquierda, centro o derecha).
+  - Quien la recibe ve a Leo grande, con su nombre.
+- Para empezar con todo limpio: `npm run demo:limpia`. Borra solo la carpeta `datos-demo/`, nunca `datos/`.
+
 ## Arrancar y mantener
 | Qué | Comando |
 |---|---|
-| Arrancar en el Mac (local) | `npm run demo` (o `npm start` sin datos ficticios) |
+| Arrancar en el Mac (local) | `npm run demo:limpia` (demo desde cero) · `npm run demo` (sigue donde lo dejaste) · `npm start` (sin datos ficticios) |
 | Parar | Ctrl+C en esa terminal |
 | Pruebas | `npm test` |
 | Subir cambios al servidor de Oracle | `IP=82.70.82.200 DOMINIO=82-70-82-200.sslip.io bash scripts/subir-vps.sh` |

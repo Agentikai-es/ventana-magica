@@ -39,7 +39,7 @@ async function cargar() {
 
   $('marcoAhora').classList.toggle('oculto', !d.escena);
   if (d.escena) {
-    pintarEscena($('escenaAhora'), componerEscena(d.escena));
+    pintarEscena($('escenaAhora'), componerEscena(d.escena, { nombre: d.alias }));
     $('textoAhora').textContent = `${d.alias} está en su ${d.escena.nombre}. Las fotos que apruebes aparecerán colgadas en su ventana.`;
   } else {
     $('textoAhora').textContent = `${d.alias} todavía no ha elegido escenario.`;
@@ -109,7 +109,7 @@ function pintarMensajes(d) {
     if (m.tipo === 'postal' && m.escena) {
       const mp = document.createElement('div'); mp.className = 'mini-postal';
       mp.innerHTML = '<div class="marco"><div class="vista"><div class="escena"></div></div></div>';
-      pintarEscena(mp.querySelector('.escena'), componerEscena(m.escena));
+      pintarEscena(mp.querySelector('.escena'), componerEscena(m.escena, { nombre: m.de === 'nino' ? d.alias : m.persona }));
       t.appendChild(mp);
     }
     if ((m.tipo === 'foto' || m.tipo === 'puzle') && m.archivo) t.appendChild(Object.assign(document.createElement('img'), { src: `${m.planta ? '/planta' : '/medios'}/${m.id}`, alt: TIPO[m.tipo] }));
