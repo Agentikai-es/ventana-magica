@@ -1,6 +1,6 @@
 // Tablet del niño: Mi mundo (escenario a su gusto) · Buzón (puzle → acertijo → descubierta) · Mi gente (chat de ida y vuelta)
 // · Amigos (otros niños de la planta: ánimos, visitas, postales y puzles entre ellos).
-import { AMBIENTES, AVATARES, PERSONAJES, POSES, SITIOS_AVATAR } from './lib/catalogo.js';
+import { AMBIENTES, AVATARES, PERSONAJES, OBJETOS, POSES, SITIOS_AVATAR, MOMENTOS, CLIMAS, iconoLugar } from './lib/catalogo.js';
 import { interpretar, construirEscenario, ajustar, sugerir } from './lib/escenario.js';
 import { componerEscena, pintarEscena } from './lib/escena.js';
 import { narrar } from './lib/narracion.js';
@@ -9,6 +9,7 @@ import { ICONOS, ponerIconos } from './iconos.js';
 import { paisaje, efecto, alternarSonido, sonidoActivo } from './sonido.js';
 import { crearPuzle } from './puzle.js';
 import { grabar, grabadoraDisponible, mmss } from './grabador.js';
+import { iniciarEditor, abrirEditor } from './editor.js';
 import { iniciarRecompensas, pintarEstrellas, celebrar, botonRegalo, refrescarJardin } from './jardin.js';
 
 ponerIconos();
@@ -39,7 +40,7 @@ async function aplicar(esc, { guardar = true } = {}) {
   // Lugares ya visitados (solo en esta tablet): las ideas proponen sitios nuevos.
   const visitados = JSON.parse(localStorage.getItem('vp-visitados') || '[]');
   if (!visitados.includes(esc.ambiente)) localStorage.setItem('vp-visitados', JSON.stringify([...visitados, esc.ambiente].slice(-40)));
-  localStorage.setItem('vp-escena', JSON.stringify({ ambiente: esc.ambiente, personajes: esc.personajes, avatar: esc.avatar, momento: esc.momento, clima: esc.clima }));
+  localStorage.setItem('vp-escena', JSON.stringify({ ambiente: esc.ambiente, personajes: esc.personajes, avatar: esc.avatar, momento: esc.momento, clima: esc.clima, personalizado: !!esc.personalizado, objetos: esc.objetos, pos: esc.pos }));
   if (guardar) await guardarEscena();
 }
 
@@ -48,7 +49,7 @@ async function guardarEscena() {
   try {
     await api('/api/ventana/escena', { metodo: 'PUT', cuerpo: {
       ambiente: actual.ambiente, personajes: actual.personajes, avatar: actual.avatar, sustituido: actual.sustituido, momento: actual.momento, clima: actual.clima,
-      pose: actual.pose, sitio: actual.sitio,
+      pose: actual.pose, sitio: actual.sitio, personalizado: !!actual.personalizado, objetos: actual.objetos, pos: actual.pos || {},
     } });
     if (estado) estado.escena = actual;
   } catch (e) { $('estado').textContent = e.message; }
@@ -59,7 +60,7 @@ function mostrarAlternativas(r) {
   $('alternativas').replaceChildren(...r.alternativas.map((alt) => {
     const b = document.createElement('button');
     b.type = 'button';
-    const icono = AMBIENTES[alt.ambiente].monumento || PERSONAJES[alt.personajes[0]].emoji;
+    const icono = iconoLugar(alt.ambiente);
     b.textContent = alt.conAmigo ? `${icono} Con ${alt.conAmigo.alias} en ${alt.nombre}` : `${alt.tema ? '✨ ' : ''}${icono} ${alt.nombre}`;
     if (alt.tema) b.title = 'Idea nueva de la ventana';
     b.onclick = () => {
@@ -136,9 +137,9 @@ for (const [id, a] of Object.entries(AMBIENTES)) {
   b.type = 'button'; b.className = 'lugar'; b.dataset.id = id;
   b.setAttribute('aria-pressed', 'false');
   const e = document.createElement('span'); e.className = 'e'; e.setAttribute('aria-hidden', 'true');
-  e.textContent = PERSONAJES[a.personajes[0]].emoji;
+  e.textContent = iconoLugar(id);
   b.append(e, a.nombre);
-  b.onclick = () => { efecto('magia'); aplicar(construirEscenario(id, { avatar, momento: actual?.momento, clima: actual?.clima })); };
+  b.onclick = () => { efecto('magia'); $('estado').textContent = `Has viajado a ${a.nombre}.`; aplicar(construirEscenario(id, { avatar, momento: actual?.momento, clima: actual?.clima })); };
   $('lugares').appendChild(b);
 }
 
@@ -231,6 +232,19 @@ $('leer').onclick = async () => {
   reproductor.onended = () => URL.revokeObjectURL(reproductor.src);
   reproductor.play().catch(() => leerConDispositivo(texto));
 };
+
+// =============== Personalizar la ventana ===============
+iniciarEditor();
+$('personalizar').onclick = () => abrirEditor(actual, {
+  guardar: async (esc) => { await aplicar(esc); $('estado').textContent = '¡Ventana personalizada! Así la verán en tus postales.'; },
+});
+// Tocar un personaje o una cosa muestra su nombre un momento (la escena se ve limpia sin etiquetas).
+$('escena').addEventListener('click', (e) => {
+  const p = e.target.closest('.pieza');
+  if (!p) return;
+  p.classList.add('ver');
+  clearTimeout(p._ver); p._ver = setTimeout(() => p.classList.remove('ver'), 2200);
+});
 
 // «Mandar postal»: primero el niño se coloca en su postal (pose y sitio) y la ve tal cual llegará.
 function pintarDiseno() {
@@ -826,7 +840,7 @@ async function iniciar() {
   pintarAvatares();
   pintarSonido();
   const e = estado.escena;
-  if (e) aplicar(construirEscenario(e.ambiente, { avatar, personajes: e.personajes, sustituido: e.sustituido, momento: e.momento, clima: e.clima }), { guardar: false });
+  if (e) aplicar(construirEscenario(e.ambiente, { avatar, personajes: e.personajes, sustituido: e.sustituido, momento: e.momento, clima: e.clima, personalizado: e.personalizado, objetos: e.objetos, pos: e.pos }), { guardar: false });
   else {
     await aplicar(construirEscenario('playa', { avatar }), { guardar: false });
     $('narracion').textContent = 'Pídele a la ventana adónde quieres ir. Por ejemplo: «llévame a la Torre Eiffel de noche».';
@@ -874,7 +888,7 @@ async function sinConexion(e) {
   const g = JSON.parse(localStorage.getItem('vp-escena') || 'null');
   avatar = g?.avatar || 'zorrito';
   pintarAvatares(); pintarSonido();
-  if (!actual) await aplicar(construirEscenario(g?.ambiente || 'playa', { avatar, personajes: g?.personajes || [], momento: g?.momento, clima: g?.clima }), { guardar: false });
+  if (!actual) await aplicar(construirEscenario(g?.ambiente || 'playa', { avatar, personajes: g?.personajes || [], momento: g?.momento, clima: g?.clima, personalizado: g?.personalizado, objetos: g?.objetos, pos: g?.pos }), { guardar: false });
   estado = { fotos: [], chats: [], planta: [], comunidad: false, puzle: { total: 9, hechas: 0, mensaje: null }, emojis: [], lado: 3 };
   pintarBuzon(); pintarPersonas(); pintarAmigos();
   setTimeout(() => location.reload(), 60_000); // vuelve a intentarlo cada minuto

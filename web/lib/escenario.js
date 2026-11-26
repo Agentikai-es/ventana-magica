@@ -54,17 +54,36 @@ function avatarValido(avatar, porDefecto) {
 }
 
 // Construye un escenario completo a partir de un ambiente del catálogo.
-export function construirEscenario(ambiente, { avatar, personajes = [], sustituido = false, momento = 'dia', clima = 'despejado', pose = 'saluda', sitio = 'centro' } = {}) {
+// Escena personalizada (25–26 nov): el niño elige qué personajes y objetos salen y dónde. Todo del catálogo.
+export const MAX_PERSONALIZADOS = 6;
+const limitar = (v, min, max) => Math.min(max, Math.max(min, Math.round(Number(v) * 10) / 10));
+// Posiciones elegidas por el niño: claves «p:<personaje>», «o:<objeto>» o «avatar»; valores en % dentro de la escena.
+export function posicionesValidas(pos, { personajes = [], objetos = [] } = {}) {
+  const out = {};
+  if (!pos || typeof pos !== 'object') return out;
+  const validas = new Set(['avatar', ...personajes.map((p) => `p:${p}`), ...objetos.map((o) => `o:${o}`)]);
+  for (const [k, v] of Object.entries(pos)) {
+    if (!validas.has(k) || !v || !Number.isFinite(Number(v.x)) || !Number.isFinite(Number(v.y))) continue;
+    out[k] = { x: limitar(v.x, 4, 96), y: limitar(v.y, 10, 90) };
+  }
+  return out;
+}
+
+export function construirEscenario(ambiente, { avatar, personajes = [], sustituido = false, momento = 'dia', clima = 'despejado', pose = 'saluda', sitio = 'centro', personalizado = false, objetos = null, pos = null } = {}) {
   if (!Object.hasOwn(AMBIENTES, ambiente)) return null;
   const a = AMBIENTES[ambiente];
-  const lista = [...new Set([...personajes.filter((p) => Object.hasOwn(PERSONAJES, p)), ...a.personajes])].slice(0, MAX_PERSONAJES);
+  const unicos = (lista, cat) => [...new Set((Array.isArray(lista) ? lista : []).map(String).filter((x) => Object.hasOwn(cat, x)))];
+  const lista = personalizado
+    ? unicos(personajes, PERSONAJES).slice(0, MAX_PERSONALIZADOS)
+    : [...new Set([...personajes.filter((p) => Object.hasOwn(PERSONAJES, p)), ...a.personajes])].slice(0, MAX_PERSONAJES);
+  const listaObjetos = personalizado && Array.isArray(objetos) ? unicos(objetos, OBJETOS).slice(0, MAX_PERSONALIZADOS) : a.objetos.filter((o) => OBJETOS[o]);
   return {
     tipo: 'escenario',
     ambiente,
     nombre: a.nombre,
     paleta: [...a.paleta],
     personajes: lista,
-    objetos: a.objetos.filter((o) => OBJETOS[o]),
+    objetos: listaObjetos,
     sonido: a.sonido,
     rolNino: 'protagonista',
     papel: a.papel,
@@ -74,6 +93,8 @@ export function construirEscenario(ambiente, { avatar, personajes = [], sustitui
     clima: Object.hasOwn(CLIMAS, clima) ? clima : 'despejado',
     pose: Object.hasOwn(POSES, pose) ? pose : 'saluda',
     sitio: Object.hasOwn(SITIOS_AVATAR, sitio) ? sitio : 'centro',
+    personalizado: !!personalizado,
+    pos: posicionesValidas(pos, { personajes: lista, objetos: listaObjetos }),
   };
 }
 
@@ -124,6 +145,7 @@ export function ajustar(escenario, { momento, clima } = {}) {
   return construirEscenario(escenario.ambiente, {
     avatar: escenario.avatar, personajes: escenario.personajes, sustituido: escenario.sustituido,
     momento: momento || escenario.momento, clima: clima || escenario.clima, pose: escenario.pose, sitio: escenario.sitio,
+    personalizado: escenario.personalizado, objetos: escenario.objetos, pos: escenario.pos,
   });
 }
 

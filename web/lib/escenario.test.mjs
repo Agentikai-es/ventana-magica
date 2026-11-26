@@ -168,3 +168,23 @@ test('mundo sin límites: más de 30 lugares y miles de combinaciones, todos vá
   assert.equal(interpretar('quiero ir a Zaragoza a ver el Ebro').ambiente, 'zaragoza');
   assert.equal(interpretar('un panda').ambiente, 'china');
 });
+
+test('escena personalizada: personajes y cosas del catálogo, máximo 6, posiciones dentro de la escena', () => {
+  const e = construirEscenario('playa', {
+    personalizado: true, personajes: ['dragon_amable', 'inventado', 'dragon_amable', 'gatito'], objetos: ['globo', '<img>', 'helado'],
+    pos: { 'p:dragon_amable': { x: 150, y: -20 }, 'p:gatito': { x: 30, y: 40 }, 'o:globo': { x: 'a', y: 1 }, avatar: { x: 10, y: 85 }, 'p:otro': { x: 5, y: 5 } },
+  });
+  assert.deepEqual(e.personajes, ['dragon_amable', 'gatito'], 'solo del catálogo y sin repetir');
+  assert.deepEqual(e.objetos, ['globo', 'helado']);
+  assert.deepEqual(e.pos['p:dragon_amable'], { x: 96, y: 10 }, 'se recorta al borde');
+  assert.equal(e.pos['o:globo'], undefined, 'valores no numéricos fuera');
+  assert.equal(e.pos['p:otro'], undefined, 'solo piezas que están en la escena');
+  assert.deepEqual(e.pos.avatar, { x: 10, y: 85 });
+  const muchos = construirEscenario('playa', { personalizado: true, personajes: Object.keys(PERSONAJES), objetos: Object.keys(OBJETOS) });
+  assert.equal(muchos.personajes.length, 6); assert.equal(muchos.objetos.length, 6);
+  const vacio = construirEscenario('playa', { personalizado: true, personajes: [], objetos: [] });
+  assert.deepEqual(vacio.personajes, [], 'puede quitar a todos');
+  const normal = construirEscenario('playa');
+  assert.deepEqual(normal.objetos, AMBIENTES.playa.objetos, 'sin personalizar, lo que trae el lugar');
+  assert.deepEqual(ajustar(e, { momento: 'noche' }).pos, e.pos, 'cambiar el cielo no pierde lo colocado');
+});

@@ -356,8 +356,12 @@ export async function crearApp({ datos = process.env.VP_DATOS || join(RAIZ, 'dat
       const a = acceso(req, 'ventana');
       if (ruta === '/api/ventana' && m === 'GET') return json(res, 200, estadoVentana(a.espacio_id));
       if (ruta === '/api/ventana/escena' && m === 'PUT') {
-        const { ambiente, personajes, avatar, sustituido, momento, clima, pose, sitio } = await leerJSON(req);
-        const esc = construirEscenario(String(ambiente), { avatar: String(avatar ?? ''), personajes: Array.isArray(personajes) ? personajes.map(String) : [], sustituido: !!sustituido, momento: String(momento ?? 'dia'), clima: String(clima ?? 'despejado'), pose: String(pose ?? 'saluda'), sitio: String(sitio ?? 'centro') });
+        const { ambiente, personajes, avatar, sustituido, momento, clima, pose, sitio, personalizado, objetos, pos } = await leerJSON(req);
+        const esc = construirEscenario(String(ambiente), {
+          avatar: String(avatar ?? ''), personajes: Array.isArray(personajes) ? personajes.slice(0, 20).map(String) : [], sustituido: !!sustituido,
+          momento: String(momento ?? 'dia'), clima: String(clima ?? 'despejado'), pose: String(pose ?? 'saluda'), sitio: String(sitio ?? 'centro'),
+          personalizado: personalizado === true, objetos: Array.isArray(objetos) ? objetos.slice(0, 20).map(String) : null, pos: pos && typeof pos === 'object' ? pos : null,
+        });
         if (!esc) throw new ErrorHttp(400, 'ambiente');
         repo.guardarEscena(a.espacio_id, esc);
         return json(res, 200, esc);

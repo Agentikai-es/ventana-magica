@@ -490,6 +490,9 @@ test('modo demo: códigos fijos que no caducan, sirven en varios dispositivos y 
   assert.equal(e1.pose, 'corazon'); assert.equal(e1.sitio, 'izquierda');
   const e2 = await pon({ ambiente: 'playa', pose: '<script>', sitio: 'arriba' });
   assert.equal(e2.pose, 'saluda'); assert.equal(e2.sitio, 'centro');
+  const e3 = await pon({ ambiente: 'playa', personalizado: true, personajes: ['dragon_amable', 'x'], objetos: [], pos: { 'p:dragon_amable': { x: 20, y: 30 }, avatar: { x: 999, y: 50 } } });
+  assert.deepEqual(e3.personajes, ['dragon_amable']); assert.deepEqual(e3.objetos, []);
+  assert.deepEqual(e3.pos, { 'p:dragon_amable': { x: 20, y: 30 }, avatar: { x: 96, y: 50 } }, 'posiciones validadas en el servidor');
   const p = await fetch(`${b}/api/panel/entrar`, { method: 'POST', headers: { 'x-vp': '1', 'content-type': 'application/json' }, body: JSON.stringify({ clave: '123456' }) });
   assert.equal(p.status, 200);
   demo.repo.limpiar(Date.now() + 60 * 24 * 3600 * 1000); // pasan dos meses

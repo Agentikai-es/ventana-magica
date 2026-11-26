@@ -4,7 +4,7 @@ const VERSION = 'vm-v5';
 const BASE = [
   '/', '/ventana', '/enviar', '/aprobar', '/privacidad',
   '/estilos.css', '/comun.js', '/iconos.js', '/sonido.js', '/puzle.js', '/grabador.js',
-  '/ventana.js', '/jardin.js', '/flores.js', '/enviar.js', '/aprobar.js', '/inicio.js', '/manifest.webmanifest', '/icono.svg', '/icono-192.png', '/icono-512.png', '/icono-apple.png',
+  '/ventana.js', '/editor.js', '/jardin.js', '/flores.js', '/enviar.js', '/aprobar.js', '/inicio.js', '/manifest.webmanifest', '/icono.svg', '/icono-192.png', '/icono-512.png', '/icono-apple.png',
   '/lib/catalogo.js', '/lib/escenario.js', '/lib/escena.js', '/lib/narracion.js',
 ];
 const NUNCA = /^\/(api|fotos|medios|video|t|panel|ca\.pem)(\/|$)/;

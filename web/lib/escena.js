@@ -91,19 +91,20 @@ function particulas(clima) {
 }
 
 // Posiciones fijas (en %) para que la escena sea estable y no tape al avatar.
-const SITIOS_OBJETOS = [{ x: 12, y: 18 }, { x: 88, y: 40 }, { x: 30, y: 72 }];
-const SITIOS_PERSONAJES = [{ x: 22, y: 52 }, { x: 74, y: 60 }, { x: 46, y: 36 }];
+const SITIOS_OBJETOS = [{ x: 12, y: 18 }, { x: 88, y: 40 }, { x: 30, y: 72 }, { x: 64, y: 24 }, { x: 8, y: 62 }, { x: 70, y: 82 }];
+const SITIOS_PERSONAJES = [{ x: 22, y: 52 }, { x: 74, y: 60 }, { x: 46, y: 36 }, { x: 88, y: 74 }, { x: 12, y: 78 }, { x: 60, y: 46 }];
 
 // Datos puros de la escena: se pueden probar sin navegador.
 // nombre: quién protagoniza la escena (en una postal recibida, el alias de quien la manda; si no, «Tú»).
 export function componerEscena(escenario, { nombre } = {}) {
   if (!escenario || escenario.tipo !== 'escenario') return null;
   const [c1, c2] = escenario.paleta;
-  const objetos = escenario.objetos.slice(0, SITIOS_OBJETOS.length).map((id, i) => ({
-    id, emoji: OBJETOS[id].emoji, etiqueta: OBJETOS[id].nombre, ...SITIOS_OBJETOS[i],
+  const pos = escenario.pos || {};
+  const objetos = escenario.objetos.filter((id) => OBJETOS[id]).slice(0, SITIOS_OBJETOS.length).map((id, i) => ({
+    id, clave: `o:${id}`, emoji: OBJETOS[id].emoji, etiqueta: OBJETOS[id].nombre, ...SITIOS_OBJETOS[i], ...pos[`o:${id}`],
   }));
-  const personajes = escenario.personajes.slice(0, SITIOS_PERSONAJES.length).map((id, i) => ({
-    id, emoji: PERSONAJES[id].emoji, etiqueta: PERSONAJES[id].nombre, ...SITIOS_PERSONAJES[i],
+  const personajes = escenario.personajes.filter((id) => PERSONAJES[id]).slice(0, SITIOS_PERSONAJES.length).map((id, i) => ({
+    id, clave: `p:${id}`, emoji: PERSONAJES[id].emoji, etiqueta: PERSONAJES[id].nombre, ...SITIOS_PERSONAJES[i], ...pos[`p:${id}`],
   }));
   const av = AVATARES[escenario.avatar];
   return {
@@ -116,7 +117,7 @@ export function componerEscena(escenario, { nombre } = {}) {
       { capa: 'personajes', items: personajes },
       { capa: 'avatar', item: {
         id: escenario.avatar, emoji: av.emoji, etiqueta: nombre ? `${nombre} · ${av.nombre}` : `Tú · ${av.nombre}`,
-        x: (SITIOS_AVATAR[escenario.sitio] || SITIOS_AVATAR.centro).x, y: 80,
+        clave: 'avatar', x: (SITIOS_AVATAR[escenario.sitio] || SITIOS_AVATAR.centro).x, y: 80, ...pos.avatar,
         pose: Object.hasOwn(POSES, escenario.pose || '') ? escenario.pose : 'saluda', accesorio: (POSES[escenario.pose] || POSES.saluda).emoji,
       } },
       { capa: 'clima', clima: escenario.clima || 'despejado', items: particulas(escenario.clima) },
@@ -129,6 +130,10 @@ function elemento(doc, clase, item, retraso) {
   d.className = `pieza ${clase}`;
   d.style.left = `${item.x}%`;
   d.style.top = `${item.y}%`;
+  // Profundidad: lo que está más abajo (más cerca) se ve un poco más grande y por delante.
+  d.style.setProperty('--prof', (0.72 + (item.y / 100) * 0.56).toFixed(2));
+  d.style.zIndex = String(Math.round(item.y));
+  if (item.clave) d.dataset.clave = item.clave;
   d.style.animationDelay = `${retraso}s`;
   d.setAttribute('role', 'img');
   d.setAttribute('aria-label', item.etiqueta);

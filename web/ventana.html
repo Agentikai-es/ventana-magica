@@ -171,6 +171,7 @@
           <div class="escena" id="escena"></div>
           <div class="cuerda" id="cuerda" role="group" aria-label="Cartas que te han llegado"></div>
           <div class="titulo-escena" id="titulo">Tu ventana</div>
+          <button type="button" class="personalizar" id="personalizar" aria-label="Personalizar la ventana" title="Personalizar"><span aria-hidden="true">🎨</span>Personalizar</button>
         </div>
       </div>
 
@@ -310,6 +311,33 @@
       <h3>¿De qué color?</h3>
       <div class="colores-flor" id="coloresFlor"></div>
       <button type="button" class="principal" id="confirmarFlor" style="width:100%;margin-top:1rem"><span data-icono="flor"></span>¡Plantar! (10 ★)</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="hoja editor" id="editor" aria-labelledby="editorTitulo">
+  <div class="hoja-cab"><h2 id="editorTitulo">🎨 Personaliza tu ventana</h2><button class="cerrar-x" type="button" data-cerrar aria-label="Cerrar">×</button></div>
+  <div class="hoja-cuerpo editor-cuerpo">
+    <div class="editor-previa">
+      <div class="marco"><div class="vista"><div class="escena" id="editorEscena"></div><div class="titulo-escena" id="editorLugar"></div></div></div>
+      <p class="editor-ayuda">✋ Arrastra con el dedo a los personajes, las cosas y a ti para colocarlos.</p>
+      <div class="editor-acciones">
+        <button type="button" id="editorReiniciar"><span aria-hidden="true">↺</span>Como venía</button>
+        <button type="button" class="principal" id="editorGuardar"><span aria-hidden="true">✓</span>¡Así me gusta!</button>
+      </div>
+    </div>
+    <div class="editor-opciones">
+      <div class="pestanas-editor" role="tablist" aria-label="Qué cambiar">
+        <button type="button" role="tab" id="edTabPersonajes" aria-selected="true" aria-controls="edPersonajes">Personajes</button>
+        <button type="button" role="tab" id="edTabObjetos" aria-selected="false" aria-controls="edObjetos">Cosas</button>
+        <button type="button" role="tab" id="edTabCielo" aria-selected="false" aria-controls="edCielo">Cielo</button>
+      </div>
+      <div role="tabpanel" id="edPersonajes" aria-labelledby="edTabPersonajes"><p class="cuenta" id="cuentaPersonajes"></p><div class="fichas" id="fichasPersonajes"></div></div>
+      <div role="tabpanel" id="edObjetos" aria-labelledby="edTabObjetos" hidden><p class="cuenta" id="cuentaObjetos"></p><div class="fichas" id="fichasObjetos"></div></div>
+      <div role="tabpanel" id="edCielo" aria-labelledby="edTabCielo" hidden>
+        <h3>¿Cuándo?</h3><div class="opciones-diseno tres" id="edMomentos"></div>
+        <h3>¿Qué tiempo hace?</h3><div class="opciones-diseno" id="edClimas"></div>
+      </div>
     </div>
   </div>
 </dialog>

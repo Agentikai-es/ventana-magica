@@ -26,6 +26,7 @@ Un espacio en la tablet que el niño personaliza con su voz o con texto, y por e
 - Criterio: nada aparece en la ventana sin aprobación humana.
 
 **P3 · Ida y vuelta.** El niño reacciona a las postales (❤️ 😂 👏) y envía su escenario de vuelta como postal. Participa, no solo mira.
+- (26 nov) **Personalizar la ventana:** el lugar trae sus personajes, cosas y cielo por defecto; con «Personalizar» el niño quita o añade hasta 6 personajes y 6 cosas del catálogo, los arrastra con el dedo (o con flechas) y cambia el momento y el tiempo. «Como venía» vuelve a lo del lugar. Se guarda y viaja en sus postales. 61 lugares.
 - (26 nov) El niño es el protagonista de su postal: antes de mandarla elige qué hace su personaje (saluda, salta, corazón, foto) y dónde sale (izquierda, centro o derecha). Quien la recibe lo ve grande y con su alias.
 
 **P4 · Amigos de la planta (comunidad interna, 24 nov).** Los niños ingresados que usan la misma caja se conocen y se animan entre ellos, sin internet.
