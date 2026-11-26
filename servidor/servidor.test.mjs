@@ -479,9 +479,9 @@ test('modo demo: códigos fijos que no caducan, sirven en varios dispositivos y 
   assert.equal((await (await canjear('222222')).json()).destino, '/aprobar');
   // Carta ya enviada y aprobada de la Abuela («Toby en el parque»), con puzle fácil para la demo en vivo.
   const v = await (await fetch(`${b}/api/ventana`, { headers: { cookie: cookieDe(t1) } })).json();
-  assert.equal(v.fotos.length, 1, 'una carta esperando a Leo');
+  assert.equal(v.fotos.length, 2, 'cartas de la Abuela y de la clase esperando a Leo');
   assert.equal(v.fotos[0].juego, 'cerrado');
-  assert.equal(v.fotos[0].facil, true, 'puzle fácil');
+  assert.ok(v.fotos.every((f) => f.facil && f.juego === 'cerrado'), 'puzles fáciles');
   const foto = await fetch(`${b}/fotos/${v.fotos[0].id}`, { headers: { cookie: cookieDe(t1) } });
   assert.equal(foto.status, 200); assert.equal(foto.headers.get('content-type'), 'image/jpeg');
   // El niño es protagonista de su postal: la pose y el sitio viajan con la escena (y se validan).

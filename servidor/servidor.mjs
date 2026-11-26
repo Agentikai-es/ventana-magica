@@ -115,18 +115,23 @@ export async function crearApp({ datos = process.env.VP_DATOS || join(RAIZ, 'dat
   // Modo demo: clave del panel fija («123456») y espacio de Leo con códigos fijos. Nunca con niños reales.
   const infoDemo = demo ? repo.asegurarDemo() : null;
   if (infoDemo) recompensas.sembrarDemo(infoDemo.espacios);
-  // Carta ya enviada y aprobada de la Abuela: «Toby en el parque» (dibujo propio, servidor/demo/perro-parque.svg).
+  // Cartas ya enviadas y aprobadas para la demo (dibujos propios en servidor/demo, sin fotos reales).
+  const CARTAS_DEMO = [
+    { marca: 'demo-clase', dibujo: 'clase.jpg', etiqueta: 'Clase de 3.º B', texto: '¡Te guardamos tu sitio junto a la ventana! Vuelve pronto.',
+      pistas: ['Somos 22 y te mandamos un corazón gigante', 'Tu mochila roja sigue colgada en clase'], lugar: 'desde el cole' },
+    { marca: 'demo-perro', dibujo: 'perro-parque.jpg', etiqueta: 'Abuela', texto: '¡Toby te manda un lametón! Te esperamos en el parque para jugar a la pelota.',
+      pistas: ['Los domingos te hago croquetas', 'Tengo un perro que se llama Toby'], lugar: 'desde el parque' },
+  ];
   async function sembrarCartaDemo() {
     const leo = infoDemo.espacios[0];
-    if (repo.aportes(leo, { tipo: 'foto' }).some((x) => String(x.archivo || '').startsWith('demo-perro'))) return;
-    const abuela = repo.db.prepare(`SELECT id FROM accesos WHERE espacio_id = ? AND etiqueta = 'Abuela' AND fijo = 1`).get(leo);
-    const archivo = `demo-perro-${randomUUID()}.jpg`;
-    await writeFile(join(FOTOS, archivo), await readFile(join(RAIZ, 'servidor', 'demo', 'perro-parque.jpg')), { mode: 0o600 });
-    repo.crearAporte(leo, {
-      accesoId: abuela?.id ?? null, autor: 'Abuela', tipo: 'foto', estado: 'aprobado', archivo,
-      texto: '¡Toby te manda un lametón! Te esperamos en el parque para jugar a la pelota.',
-      pistas: ['Los domingos te hago croquetas', 'Tengo un perro que se llama Toby'], lugar: 'desde el parque',
-    });
+    const ya = repo.aportes(leo, { tipo: 'foto' }).map((x) => String(x.archivo || ''));
+    for (const c of CARTAS_DEMO) {
+      if (ya.some((a) => a.startsWith(c.marca))) continue;
+      const acceso = repo.db.prepare('SELECT id FROM accesos WHERE espacio_id = ? AND etiqueta = ? AND fijo = 1').get(leo, c.etiqueta);
+      const archivo = `${c.marca}-${randomUUID()}.jpg`;
+      await writeFile(join(FOTOS, archivo), await readFile(join(RAIZ, 'servidor', 'demo', c.dibujo)), { mode: 0o600 });
+      repo.crearAporte(leo, { accesoId: acceso?.id ?? null, autor: c.etiqueta, tipo: 'foto', estado: 'aprobado', archivo, texto: c.texto, pistas: c.pistas, lugar: c.lugar });
+    }
   }
   if (infoDemo) await sembrarCartaDemo();
   // En una demo pública (Render) la clave del panel viene de VP_CLAVE_PANEL, nunca la fácil.
