@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Un mundo cerca de ti · Ventana Mágica</title>
+<style>
+  @page { size: 1376px 768px; margin: 0; }
+  :root {
+    --noche: #161b33; --noche2: #222a55; --crema: #fbf3e6; --crema2: #f3e6cf; --tinta: #23253a; --suave: #5d5f7a;
+    --naranja: #ffb86b; --coral: #ef6f53; --verde: #3fae86; --azul: #4d7cc9;
+    --titulo: "Iowan Old Style", "Palatino", Georgia, serif;
+    --texto: "Avenir Next", "Avenir", -apple-system, "Helvetica Neue", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body > .slide:last-of-type { page-break-after: avoid; break-after: avoid; }
+  body { font-family: var(--texto); color: var(--tinta); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .slide { width: 1376px; height: 768px; position: relative; overflow: hidden; page-break-after: always; break-after: page; padding: 64px 76px; background: var(--crema); }
+  .slide:last-child { page-break-after: auto; break-after: auto; }
+  .oscura { background: radial-gradient(120% 90% at 85% 10%, var(--noche2), var(--noche) 60%); color: #f6efe3; }
+  .kicker { font-weight: 700; letter-spacing: .14em; text-transform: uppercase; font-size: 15px; color: #b8412a; margin: 0 0 14px; }
+  .oscura .kicker { color: var(--naranja); }
+  h1, h2 { font-family: var(--titulo); font-weight: 700; margin: 0; line-height: 1.02; letter-spacing: -.01em; }
+  h1 { font-size: 96px; }
+  h2 { font-size: 54px; }
+  .lead { font-size: 24px; line-height: 1.4; color: var(--suave); max-width: 560px; }
+  .oscura .lead { color: #d9d3e8; }
+  .num { position: absolute; right: 40px; bottom: 26px; font-size: 14px; color: #64617c; font-weight: 600; }
+  .marca { position: absolute; left: 76px; bottom: 26px; font-size: 14px; color: #64617c; font-weight: 600; letter-spacing: .02em; }
+  .marca b { color: #b8412a; }
+  .oscura .num, .oscura .marca { color: #b9b4cf; }
+  .oscura .marca b { color: var(--naranja); }
+
+  /* Pantallas de la app */
+  .movil { width: 238px; border-radius: 34px; padding: 9px; background: #10121f; }
+  .movil img { display: block; width: 100%; border-radius: 26px; }
+  .pantalla { border-radius: 18px; overflow: hidden; background: #fff; border: 1px solid #23253a22; }
+  .pantalla img { display: block; width: 100%; }
+  .lista { list-style: none; padding: 0; margin: 26px 0 0; display: grid; gap: 16px; }
+  .lista li { display: grid; grid-template-columns: 34px 1fr; gap: 12px; font-size: 21px; line-height: 1.35; }
+  .lista li b { color: var(--tinta); }
+  .lista .i { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-size: 19px; background: #fff; }
+  .oscura .lista .i { background: #ffffff14; }
+  .oscura .lista li b { color: #fff; }
+
+  /* 1 · Portada */
+  .portada { display: grid; grid-template-columns: 1.15fr 1fr; gap: 56px; align-items: center; }
+  .portada h1 em { font-style: normal; color: var(--naranja); }
+  .portada .sub { font-size: 25px; line-height: 1.4; color: #d9d3e8; margin: 26px 0 0; max-width: 600px; }
+  .equipo { margin-top: 46px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .equipo span { padding: 11px 20px; border-radius: 999px; background: #ffffff12; border: 1px solid #ffffff22; font-weight: 600; font-size: 19px; }
+  .equipo-tit { margin-top: 44px; font-size: 14px; letter-spacing: .14em; text-transform: uppercase; color: #c3bedb; font-weight: 700; }
+  .equipo-tit + .equipo { margin-top: 12px; }
+  .foto-marco { border-radius: 28px; overflow: hidden; height: 600px; border: 10px solid #f3e6cf; }
+  .foto-marco img { width: 100%; height: 100%; object-fit: cover; object-position: 30% 50%; }
+
+  /* 2 · Problema */
+  .problema { display: grid; grid-template-columns: 560px 1fr; gap: 64px; align-items: center; }
+  .problema .ilus { height: 640px; border-radius: 28px; overflow: hidden; }
+  .problema .ilus img { width: 100%; height: 100%; object-fit: cover; }
+  .dato { display: flex; align-items: baseline; gap: 18px; margin: 6px 0 22px; }
+  .dato b { font-family: var(--titulo); font-size: 120px; line-height: .9; color: var(--coral); }
+  .dato span { font-size: 26px; font-weight: 600; color: var(--suave); }
+  .cita { font-family: var(--titulo); font-size: 36px; line-height: 1.25; margin: 0; }
+  .cita2 { font-size: 24px; color: var(--suave); margin-top: 22px; }
+
+  /* 3 · Tres pasos */
+  .pasos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 30px; }
+  .paso { display: grid; grid-template-columns: 238px 1fr; gap: 20px; align-items: end; }
+  .paso .movil { width: 238px; }
+  .paso .movil img { height: 380px; object-fit: cover; object-position: top; }
+  .paso h3 { margin: 0 0 6px; font-size: 21px; line-height: 1.2; }
+  .paso p { margin: 0; font-size: 16px; color: var(--suave); line-height: 1.4; }
+  .paso .n { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: #fff; background: var(--coral); margin-bottom: 12px; font-size: 19px; }
+  .pasos-v { display: grid; grid-template-columns: repeat(3, 300px); justify-content: space-between; margin-top: 26px; }
+  .pasos-v .movil { margin: 0 auto; }
+  .pasos-v .paso { display: block; }
+  .pasos-v .txt { margin-top: 16px; display: grid; grid-template-columns: 40px 1fr; gap: 0 12px; align-items: start; }
+  .pasos-v .txt .n { grid-row: span 2; margin: 0; }
+
+  /* Diapositivas con captura grande */
+  .partida { display: grid; grid-template-columns: 1fr 760px; gap: 54px; align-items: center; height: 100%; }
+  .partida.izq { grid-template-columns: 760px 1fr; }
+  .partida h2 { margin-bottom: 4px; }
+
+  /* Seguridad */
+  .seg { display: grid; grid-template-columns: 1fr 238px 238px; gap: 34px; align-items: center; height: 100%; }
+  .seg .movil img { height: 500px; object-fit: cover; object-position: top; }
+
+  /* Comparativa */
+  .comp { display: grid; grid-template-columns: 1fr 1fr 1.15fr; gap: 24px; margin-top: 40px; }
+  .col { background: #fff; border-radius: 24px; padding: 30px 30px 26px; border: 1px solid #23253a14; }
+  .col h3 { font-family: var(--titulo); font-size: 31px; margin: 0; }
+  .col .et { display: inline-block; margin: 12px 0 20px; padding: 6px 14px; border-radius: 999px; background: var(--crema2); font-weight: 700; font-size: 15px; color: var(--suave); }
+  .col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .col li { font-size: 19px; line-height: 1.35; padding-left: 34px; position: relative; }
+  .col li::before { content: "✕"; position: absolute; left: 0; top: 0; width: 24px; height: 24px; border-radius: 50%; background: #f2d6cf; color: #b8412a; font-size: 13px; font-weight: 800; display: grid; place-items: center; }
+  .col.nos { background: var(--noche); color: #f6efe3; }
+  .col.nos .et { background: var(--verde); color: #fff; }
+  .col.nos li::before { content: "✓"; background: #2f7f62; color: #fff; }
+
+  /* Arquitectura */
+  .arq { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-top: 34px; align-items: stretch; }
+  .caja { background: #fff; border-radius: 22px; padding: 24px 24px 20px; position: relative; border: 1px solid #23253a14; }
+  .caja h3 { margin: 0 0 10px; font-size: 22px; }
+  .caja p { margin: 0; color: var(--suave); font-size: 17px; line-height: 1.45; }
+  .caja .ico { font-size: 30px; margin-bottom: 8px; }
+  .caja.central { background: var(--noche); color: #f6efe3; }
+  .caja.central p { color: #d9d3e8; }
+  .flecha { position: absolute; right: -16px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; border-radius: 50%; background: var(--naranja); color: var(--tinta); display: grid; place-items: center; font-weight: 800; z-index: 2; font-size: 16px; }
+  .despliegue { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-top: 18px; }
+  .chip { border-radius: 18px; padding: 18px 22px; background: var(--crema2); font-size: 17px; line-height: 1.4; }
+  .chip b { display: block; font-size: 19px; margin-bottom: 4px; }
+  .chip.verde { background: #dcefe6; }
+
+  /* Demo */
+  .tl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 44px; position: relative; }
+  .tl::before { content: ""; position: absolute; left: 30px; right: 30px; top: 30px; height: 4px; background: linear-gradient(90deg, var(--naranja), var(--coral)); border-radius: 4px; }
+  .hito { position: relative; }
+  .hito .p { width: 64px; height: 64px; border-radius: 50%; background: #fff; display: grid; place-items: center; font-size: 30px; position: relative; }
+  .hito h3 { margin: 20px 0 6px; font-size: 22px; }
+  .hito p { margin: 0; font-size: 17px; color: var(--suave); line-height: 1.45; }
+  .hito code { font-family: "SF Mono", Menlo, monospace; background: #fff; padding: 2px 8px; border-radius: 8px; font-size: 15px; color: var(--tinta); }
+
+  /* Cierre */
+  .cierre { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: center; height: 100%; }
+  .cierre .ilus { height: 560px; border-radius: 28px; overflow: hidden; }
+  .cierre .ilus img { width: 100%; height: 100%; object-fit: cover; object-position: 40% 50%; }
+  .cierre blockquote { margin: 0; font-family: var(--titulo); font-size: 50px; line-height: 1.12; }
+  .cierre blockquote em { font-style: normal; color: var(--naranja); }
+  .gracias { margin-top: 30px; font-size: 22px; color: #d9d3e8; }
+
+  .codigos { margin-top: 56px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+  .codigo { border: 1px solid #ffffff26; background: #ffffff0f; border-radius: 18px; padding: 16px 18px; }
+  .codigo b { display: block; font-family: "SF Mono", Menlo, monospace; font-size: 26px; color: var(--naranja); letter-spacing: .06em; }
+  .codigo span { font-size: 16px; color: #d9d3e8; }
+  .pista { margin-top: 18px; font-size: 17px; color: #b9b4cf; }
+</style>
+</head>
+<body>
+
+<!-- 1 · Portada -->
+<section class="slide oscura">
+  <div class="portada" style="height:100%">
+    <div>
+      <p class="kicker">Hackathon · 26 de noviembre de 2026</p>
+      <h1>Un mundo<br><em>cerca de ti</em></h1>
+      <p class="sub">Ventana Mágica: una ventana en la tablet para que el niño hospitalizado siga dentro de la vida de su familia, su clase y sus amigos.</p>
+      <p class="equipo-tit">Equipo</p>
+      <div class="equipo"><span>David Bernal</span><span>Jamin Gomez</span><span>Jokasta Solorzano</span></div>
+    </div>
+    <div class="foto-marco"><img src="img/hospital.jpg" alt=""></div>
+  </div>
+</section>
+
+<!-- 2 · El problema -->
+<section class="slide">
+  <div class="problema" style="height:100%">
+    <div class="ilus"><img src="img/fuera.jpg" alt=""></div>
+    <div>
+      <p class="kicker">El problema</p>
+      <h2>Leo, 8 años</h2>
+      <div class="dato"><b>21</b><span>días ingresado</span></div>
+      <p class="cita">La medicina cura su cuerpo, pero el aislamiento apaga su infancia.</p>
+      <p class="cita2">Su abuela, su perro, su clase… su vida sigue fuera. <b>Sin él.</b></p>
+    </div>
+  </div>
+  <p class="marca"><b>Un mundo cerca de ti</b> · Ventana Mágica</p><p class="num">2</p>
+</section>
+
+<!-- 3 · La idea -->
+<section class="slide">
+  <p class="kicker">La idea</p>
+  <h2>La vida de fuera entra jugando</h2>
+  <div class="pasos-v">
+    <div class="paso"><div class="movil"><img src="img/02-puzle.jpg" alt=""></div>
+      <div class="txt"><div class="n">1</div><h3>La familia manda una foto</h3><p>Llega como un puzle fácil, de piezas grandes.</p></div></div>
+    <div class="paso"><div class="movil"><img src="img/03-descubierta.jpg" alt=""></div>
+      <div class="txt"><div class="n">2</div><h3>Leo adivina quién es</h3><p>Pistas, acertijo y el mensaje: «¡Era la abuela!».</p></div></div>
+    <div class="paso"><div class="movil"><img src="img/06-postal.jpg" alt=""></div>
+      <div class="txt"><div class="n">3</div><h3>Leo contesta… y es el protagonista</h3><p>Una postal desde su mundo, con su personaje.</p></div></div>
+  </div>
+  <p class="marca"><b>Un mundo cerca de ti</b> · Ventana Mágica</p><p class="num">3</p>
+</section>
+
+<!-- 4 · Su mundo, su voz -->
+<section class="slide oscura">
+  <div class="partida">
+    <div>
+      <p class="kicker">Su mundo, su voz</p>
+      <h2>«Quiero estar en la Torre Eiffel de noche»</h2>
+      <ul class="lista">
+        <li><span class="i">🎙️</span><span><b>Lo dice y aparece.</b> La voz se entiende en el propio servidor, nunca en la nube.</span></li>
+        <li><span class="i">🗺️</span><span><b>61 lugares:</b> del Polo Norte a Venecia, Madrid o la isla del tesoro.</span></li>
+        <li><span class="i">🦊</span><span><b>Personajes propios,</b> sin marcas registradas. El niño crea, no solo mira.</span></li>
+      </ul>
+    </div>
+    <div class="pantalla"><img src="img/04-paris.jpg" alt=""></div>
+  </div>
+  <p class="marca"><b>Un mundo cerca de ti</b> · Ventana Mágica</p><p class="num">4</p>
+</section>
+
+<!-- 5 · Personalizar -->
+<section class="slide">
+  <div class="partida izq">
+    <div class="pantalla"><img src="img/05-editor.jpg" alt=""></div>
+    <div>
+      <p class="kicker">Hecha a su medida</p>
+      <h2>Cada ventana es única</h2>
+      <ul class="lista">
+        <li><span class="i">✨</span><span>Cada lugar trae sus personajes y cosas, <b>listos para jugar.</b></span></li>
+        <li><span class="i">✋</span><span>Quita, añade hasta 6 y <b>los coloca con el dedo.</b></span></li>
+        <li><span class="i">🌙</span><span>Día, atardecer o noche; lluvia, nieve o fiesta.</span></li>
+        <li><span class="i">↺</span><span>«Como venía» lo deja como al principio.</span></li>
+      </ul>
+    </div>
+  </div>
+  <p class="marca"><b>Un mundo cerca de ti</b> · Ventana Mágica</p><p class="num">5</p>
+</section>
+
+<!-- 6 · Motivación sin competir -->
+<section class="slide">
+  <div class="partida">
+    <div>
+      <p class="kicker">Motivación sin estrés</p>
+      <h2>Un jardín que cuidan entre todos</h2>
+      <ul class="lista">
+        <li><span class="i">⭐</span><span><b>Estrellas</b> por cada carta resuelta: 1 de la familia, 2 de un amigo de la planta.</span></li>
+        <li><span class="i">🌻</span><span>Con 10 estrellas <b>planta una flor</b> que elige él.</span></li>
+        <li><span class="i">🎁</span><span>Puede <b>regalar estrellas</b> a otro niño: ser generoso no cuesta nada.</span></li>
+        <li><span class="i">🦋</span><span><b>Sin ranking ni velocidad:</b> metas comunes para toda la planta.</span></li>
+      </ul>
+    </div>
+    <div class="pantalla"><img src="img/07-jardin.jpg" alt=""></div>
+  </div>
+  <p class="marca"><b>Un mundo cerca de ti</b> · Ventana Mágica</p><p class="num">6</p>
+</section>
+
+<!-- 7 · El adulto decide -->
+<section class="slide">
+  <div class="seg">
+    <div>
+      <p class="kicker">Seguridad y privacidad</p>
+      <h2>El adulto siempre tiene la última palabra</h2>
+      <ul class="lista">
+        <li><span class="i">✅</span><span><b>Nada entra ni sale sin aprobación</b> de un adulto de confianza.</span></li>
+        <li><span class="i">📍</span><span>Fotos y vídeos <b>sin ubicación ni metadatos.</b></span></li>
+        <li><span class="i">🙂</span><span>Alias, nunca datos clínicos. <b>Sin cuentas ni contraseñas.</b></span></li>
+        <li><span class="i">🗑️</span><span>Todo se borra <b>a los 30 días o al alta.</b></span></li>
+      </ul>
+    </div>
+    <div><div class="movil"><img src="img/08-enviar.jpg" alt=""></div><p style="text-align:center;font-weight:700;color:var(--suave);margin:12px 0 0">La familia envía</p></div>
+    <div><div class="movil"><img src="img/09-aprobar.jpg" alt=""></div><p style="text-align:center;font-weight:700;color:var(--suave);margin:12px 0 0">El adulto aprueba</p></div>
+  </div>
+  <p class="marca"><b>Un mundo cerca de ti</b> · Ventana Mágica</p><p class="num">7</p>
+</section>
+
+<!-- 8 · Comparativa -->
+<section class="slide">
+  <p class="kicker">Por qué así</p>
+  <h2>Ni una videollamada más, ni otra pantalla pasiva</h2>
+  <div class="comp">
+    <div class="col"><h3>Videollamada</h3><span class="et">Síncrona</span>
+      <ul><li>Exige coincidir a la misma hora.</li><li>Puede cansar al niño.</li></ul></div>
+    <div class="col"><h3>Ver vídeos</h3><span class="et">Pasiva</span>
+      <ul><li>Sigue aislado.</li><li>Cero creatividad.</li></ul></div>
+    <div class="col nos"><h3>Un mundo cerca de ti</h3><span class="et">Asíncrona y activa</span>
+      <ul><li>Se adapta a sus ratos buenos.</li><li>Respeta el descanso.</li><li>Convierte cada mensaje en un juego.</li></ul></div>
+  </div>
+  <p class="marca"><b>Un mundo cerca de ti</b> · Ventana Mágica</p><p class="num">8</p>
+</section>
+
+<!-- 9 · Cómo funciona -->
+<section class="slide">
+  <p class="kicker">Cómo funciona</p>
+  <h2>Sencillo, propio y sin coste de licencias</h2>
+  <div class="arq">
+    <div class="caja"><div class="ico">📱</div><h3>Web app instalable (PWA)</h3><p>Tablet del niño, móviles de la familia y del adulto. Se instala como una app y funciona aunque se corte la conexión.</p><span class="flecha">→</span></div>
+    <div class="caja central"><div class="ico">🖥️</div><h3>Un único servidor</h3><p>Node.js + SQLite, sin librerías externas. Tiempo real para avisos y aprobaciones. Voz e ideas con IA dentro del propio servidor.</p><span class="flecha">→</span></div>
+    <div class="caja"><div class="ico">🔒</div><h3>Datos en casa</h3><p>Un archivo de base de datos y una carpeta de fotos, sin metadatos. Borrado automático. Nada se envía a servicios externos.</p></div>
+  </div>
+  <div class="despliegue">
+    <div class="chip"><b>🏥 En la planta, sin internet</b>Una Raspberry Pi con su propia wifi. Lo de fuera llega en cada visita.</div>
+    <div class="chip"><b>🌍 Familia desde casa</b>Servidor Linux con Apache y HTTPS. Fotos, vídeos y GIF en tiempo real.</div>
+    <div class="chip verde"><b>💶 0 € en software</b>Todo es software libre. Se instala con un solo comando.</div>
+  </div>
+  <p class="marca"><b>Un mundo cerca de ti</b> · Ventana Mágica</p><p class="num">9</p>
+</section>
+
+<!-- 10 · Demo -->
+<section class="slide oscura">
+  <p class="kicker">Demo en vivo · 3 minutos</p>
+  <h2>Un día en la planta</h2>
+  <div class="tl">
+    <div class="hito"><div class="p">👵</div><h3>La abuela envía</h3><p style="color:#d9d3e8">Una foto de Toby en el parque, con dos pistas.</p></div>
+    <div class="hito"><div class="p">🛡️</div><h3>Mamá aprueba</h3><p style="color:#d9d3e8">Le llega el aviso al instante y decide.</p></div>
+    <div class="hito"><div class="p">🧩</div><h3>Leo descubre</h3><p style="color:#d9d3e8">Monta el puzle, acierta el acertijo y gana una estrella.</p></div>
+    <div class="hito"><div class="p">💌</div><h3>Leo responde</h3><p style="color:#d9d3e8">Personaliza su ventana y manda una postal. ¡Sale él!</p></div>
+  </div>
+  <div class="codigos">
+    <div class="codigo"><b>123456</b><span>Leo · tablet</span></div>
+    <div class="codigo"><b>111111</b><span>Abuela</span></div>
+    <div class="codigo"><b>222222</b><span>Mamá · aprueba</span></div>
+    <div class="codigo"><b>333333</b><span>Clase de 3.º B</span></div>
+    <div class="codigo"><b>444444</b><span>Sara · amiga</span></div>
+    <div class="codigo"><b>555555</b><span>Papá de Sara</span></div>
+  </div>
+  <p class="pista">Datos ficticios. Sin cuentas: cada persona entra con su código o su enlace de invitación.</p>
+  <p class="marca"><b>Un mundo cerca de ti</b> · Ventana Mágica</p><p class="num">10</p>
+</section>
+
+<!-- 11 · Cierre -->
+<section class="slide oscura">
+  <div class="cierre">
+    <div>
+      <p class="kicker">En resumen</p>
+      <blockquote>El hospital trata la enfermedad; <em>nosotros ayudamos a proteger la infancia.</em></blockquote>
+      <p class="gracias">Llevamos la vida de fuera adentro, de forma ordenada, segura y humana.</p>
+      <p class="equipo-tit">Gracias · Equipo</p>
+      <div class="equipo"><span>David Bernal</span><span>Jamin Gomez</span><span>Jokasta Solorzano</span></div>
+    </div>
+    <div class="ilus"><img src="img/nino.jpg" alt=""></div>
+  </div>
+</section>
+
+</body>
+</html>
